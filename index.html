@@ -3,11 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProductScan Pro</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.0.4"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <title>Admin Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -30,7 +26,7 @@
     }
     
     body {
-      background: linear-gradient(135deg, #1d2b64, #f8cdda);
+      background: linear-gradient(135deg, #1d3557, #457b9d);
       color: #333;
       min-height: 100vh;
       padding: 20px;
@@ -41,7 +37,7 @@
     
     .container {
       width: 100%;
-      max-width: 1200px;
+      max-width: 800px;
       display: flex;
       flex-direction: column;
       gap: 25px;
@@ -79,115 +75,27 @@
       -webkit-text-fill-color: transparent;
     }
     
-    .search-container {
-      position: relative;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    
-    .search-box {
+    .back-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
       display: flex;
-      background: var(--card-bg);
-      border-radius: 50px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
+      align-items: center;
+      justify-content: center;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
       transition: var(--transition);
-      border: 2px solid transparent;
     }
     
-    .search-box:focus-within {
-      border-color: var(--primary);
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
       transform: translateY(-3px);
     }
     
-    #search-input {
-      flex: 1;
-      padding: 18px 25px;
-      border: none;
-      background: transparent;
-      font-size: 1.1rem;
-      outline: none;
-    }
-    
-    #search-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0 30px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    
-    #search-btn:hover {
-      background: var(--secondary);
-    }
-    
-    .search-results {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: var(--card-bg);
-      border-radius: 15px;
-      margin-top: 10px;
-      max-height: 400px;
-      overflow-y: auto;
-      box-shadow: var(--shadow);
-      z-index: 100;
-      display: none;
-      transform-origin: top;
-      animation: scaleIn 0.3s ease-out;
-    }
-    
-    .search-result-item {
-      display: flex;
-      padding: 15px 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      cursor: pointer;
-      transition: var(--transition);
-      gap: 15px;
-      align-items: center;
-    }
-    
-    .search-result-item:hover {
-      background: rgba(67, 97, 238, 0.05);
-      transform: translateX(5px);
-    }
-    
-    .result-img {
-      width: 60px;
-      height: 60px;
-      border-radius: 10px;
-      object-fit: cover;
-      background: #f0f0f0;
-    }
-    
-    .result-info {
-      flex: 1;
-    }
-    
-    .result-name {
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: var(--dark);
-    }
-    
-    .result-price {
-      color: var(--primary);
-      font-weight: 700;
-      margin-top: 5px;
-    }
-    
-    .scan-section {
-      display: flex;
-      gap: 30px;
-      margin-top: 10px;
-    }
-    
-    .scanner-card, .admin-card {
-      flex: 1;
+    .admin-card {
       background: var(--card-bg);
       border-radius: 20px;
       padding: 30px;
@@ -227,97 +135,6 @@
       margin-top: 5px;
     }
     
-    #scanner-container {
-      width: 100%;
-      height: 400px;
-      border-radius: 15px;
-      overflow: hidden;
-      position: relative;
-      background: #000;
-      margin-bottom: 20px;
-    }
-    
-    #scanner-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-    
-    .scanner-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    
-    .scanner-frame {
-      width: 80%;
-      max-width: 400px;
-      height: 300px;
-      border: 4px solid #00ff88;
-      border-radius: 15px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
-    }
-    
-    .scan-line {
-      position: absolute;
-      height: 4px;
-      width: 100%;
-      background: linear-gradient(90deg, transparent, #00ff88, transparent);
-      box-shadow: 0 0 15px #00ff88;
-      top: 0;
-      animation: scan 2s ease-in-out infinite;
-    }
-    
-    .scanner-guide {
-      margin-top: 20px;
-      color: white;
-      font-weight: bold;
-      text-align: center;
-      font-size: 1.3rem;
-      text-shadow: 0 0 10px rgba(0,0,0,0.7);
-    }
-    
-    .scanner-controls {
-      display: flex;
-      gap: 15px;
-      margin-top: 20px;
-    }
-    
-    .scanner-btn {
-      flex: 1;
-      padding: 15px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 600;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    
-    .scan-btn {
-      background: var(--primary);
-      color: white;
-    }
-    
-    .scan-btn:hover {
-      background: var(--secondary);
-      transform: translateY(-3px);
-    }
-    
     .admin-form {
       display: flex;
       flex-direction: column;
@@ -350,10 +167,87 @@
       box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
     }
     
+    .suggestion-box {
+      position: absolute;
+      background: white;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+      width: 100%;
+      margin-top: 5px;
+    }
+    
+    .suggestion-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .suggestion-item:hover {
+      background: #f0f4ff;
+    }
+    
+    .camera-section {
+      background: #f8f9fa;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+    
+    #camera-preview {
+      width: 100%;
+      height: 300px;
+      border-radius: 10px;
+      background: #000;
+      margin-bottom: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #camera-view {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    
+    .camera-controls {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .camera-btn {
+      flex: 1;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .capture-btn {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .capture-btn:hover {
+      background: var(--secondary);
+      transform: translateY(-3px);
+    }
+    
     .admin-controls {
       display: flex;
       gap: 15px;
-      margin-top: 10px;
+      margin-top: 20px;
     }
     
     .admin-btn {
@@ -389,62 +283,6 @@
     .update-btn:hover {
       background: #e08e00;
       transform: translateY(-3px);
-    }
-    
-    .product-display {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: var(--shadow);
-      display: none;
-      animation: fadeIn 0.8s ease-out;
-      margin-top: 20px;
-    }
-    
-    .product-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-    }
-    
-    .product-image-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .product-image {
-      max-width: 100%;
-      max-height: 300px;
-      border-radius: 15px;
-      box-shadow: var(--shadow);
-      object-fit: cover;
-    }
-    
-    .product-info {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    
-    .product-name {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: var(--dark);
-      margin-bottom: 15px;
-    }
-    
-    .product-price {
-      font-size: 2.5rem;
-      color: var(--primary);
-      font-weight: 800;
-      margin: 10px 0;
-    }
-    
-    .price-label {
-      font-size: 1.2rem;
-      color: #666;
-      font-weight: 600;
     }
     
     .toast {
@@ -483,29 +321,6 @@
       background: var(--danger);
     }
     
-    .suggestion-box {
-      position: absolute;
-      background: white;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 10;
-      display: none;
-      width: 100%;
-      margin-top: 5px;
-    }
-    
-    .suggestion-item {
-      padding: 12px 20px;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    
-    .suggestion-item:hover {
-      background: #f0f4ff;
-    }
-    
     @keyframes slideDown {
       from { transform: translateY(-50px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -515,127 +330,117 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    
-    @keyframes scaleIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    
-    @keyframes scan {
-      0% { top: 0; }
-      50% { top: calc(100% - 4px); }
-      100% { top: 0; }
-    }
-    
-    @media (max-width: 900px) {
-      .scan-section {
-        flex-direction: column;
-      }
-      
-      .product-grid {
-        grid-template-columns: 1fr;
-      }
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
+      <a href="index.html" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+      </a>
       <div class="logo">
-        <i class="fas fa-camera-retro"></i>
-        <h1>ProductScan Pro</h1>
+        <i class="fas fa-user-cog"></i>
+        <h1>Admin Dashboard</h1>
       </div>
-      <div class="user">
-        <i class="fas fa-user-circle"></i>
-      </div>
+      <div style="width: 45px;"></div>
     </header>
     
-    <div class="search-container">
-      <div class="search-box">
-        <input type="text" id="search-input" placeholder="Rechercher un produit...">
-        <button id="search-btn"><i class="fas fa-search"></i></button>
-      </div>
-      <div class="search-results" id="search-results"></div>
-    </div>
-    
-    <div class="scan-section">
-      <div class="scanner-card">
-        <div class="card-header">
-          <i class="fas fa-camera"></i>
-          <div>
-            <h2 class="card-title">Scan Visuel</h2>
-            <p class="card-subtitle">Scannez le produit avec votre caméra</p>
-          </div>
-        </div>
-        
-        <div id="scanner-container">
-          <video id="scanner-video" playsinline autoplay></video>
-          <div class="scanner-overlay">
-            <div class="scanner-frame">
-              <div class="scan-line"></div>
-            </div>
-            <div class="scanner-guide">Pointez la caméra vers le produit</div>
-          </div>
-        </div>
-        
-        <div class="scanner-controls">
-          <button class="scanner-btn scan-btn" id="start-scan">
-            <i class="fas fa-play"></i> Démarrer le Scan
-          </button>
-          <button class="scanner-btn scan-btn" id="stop-scan" style="display: none;">
-            <i class="fas fa-stop"></i> Arrêter le Scan
-          </button>
+    <div class="admin-card">
+      <div class="card-header">
+        <i class="fas fa-plus-circle"></i>
+        <div>
+          <h2 class="card-title">Ajouter un Produit</h2>
+          <p class="card-subtitle">Entrez les détails du nouveau produit</p>
         </div>
       </div>
       
-      <div class="admin-card">
-        <div class="card-header">
-          <i class="fas fa-user-cog"></i>
-          <div>
-            <h2 class="card-title">Espace Admin</h2>
-            <p class="card-subtitle">Ajouter ou modifier des produits</p>
+      <div class="admin-form">
+        <div class="form-group">
+          <label for="product-name">Nom du Produit</label>
+          <input type="text" id="product-name" placeholder="Entrez le nom du produit">
+        </div>
+        
+        <div class="form-group">
+          <label for="product-price">Prix (TND)</label>
+          <input type="number" id="product-price" placeholder="Prix en dinar tunisien" step="0.001" min="0">
+        </div>
+        
+        <div class="form-group">
+          <label for="barcode">Code-barres (Optionnel)</label>
+          <input type="text" id="barcode" placeholder="Entrez le code-barres">
+        </div>
+        
+        <div class="camera-section">
+          <div class="card-subtitle" style="margin-bottom: 15px;">Prendre une photo du produit</div>
+          
+          <div class="camera-settings">
+            <div class="settings-grid">
+              <div class="form-group">
+                <label for="admin-resolution">Résolution</label>
+                <select id="admin-resolution">
+                  <option value="480p">480p (SD)</option>
+                  <option value="720p" selected>720p (HD)</option>
+                  <option value="1080p">1080p (Full HD)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="admin-fps">Images par Seconde</label>
+                <select id="admin-fps">
+                  <option value="15">15 IPS</option>
+                  <option value="30" selected>30 IPS</option>
+                  <option value="60">60 IPS</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div id="camera-preview">
+            <video id="camera-view" playsinline autoplay></video>
+          </div>
+          
+          <div class="camera-controls">
+            <button class="camera-btn capture-btn" id="start-camera">
+              <i class="fas fa-camera"></i> Démarrer la Caméra
+            </button>
+            <button class="camera-btn capture-btn" id="capture-photo">
+              <i class="fas fa-camera-retro"></i> Prendre une Photo
+            </button>
           </div>
         </div>
         
-        <div class="admin-form">
-          <div class="form-group">
-            <label for="product-name">Nom du Produit</label>
-            <input type="text" id="product-name" placeholder="Entrez le nom du produit">
-            <div class="suggestion-box" id="name-suggestions"></div>
-          </div>
-          
-          <div class="form-group">
-            <label for="product-price">Prix (TND)</label>
-            <input type="number" id="product-price" placeholder="Prix en dinar tunisien" step="0.01" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="barcode">Code-barres (Optionnel)</label>
-            <input type="text" id="barcode" placeholder="Entrez le code-barres">
-          </div>
-          
-          <div class="admin-controls">
-            <button class="admin-btn save-btn" id="save-product">
-              <i class="fas fa-save"></i> Enregistrer
-            </button>
-            <button class="admin-btn update-btn" id="update-product">
-              <i class="fas fa-sync-alt"></i> Mettre à jour
-            </button>
-          </div>
+        <div class="admin-controls">
+          <button class="admin-btn save-btn" id="save-product">
+            <i class="fas fa-save"></i> Enregistrer le Produit
+          </button>
         </div>
       </div>
     </div>
     
-    <div class="product-display" id="product-display">
-      <div class="product-grid">
-        <div class="product-image-container">
-          <img class="product-image" id="display-image" src="" alt="Product Image">
+    <div class="admin-card">
+      <div class="card-header">
+        <i class="fas fa-edit"></i>
+        <div>
+          <h2 class="card-title">Mettre à Jour un Produit</h2>
+          <p class="card-subtitle">Modifier le prix ou l'image d'un produit existant</p>
         </div>
-        <div class="product-info">
-          <h2 class="product-name" id="display-name"></h2>
-          <div class="price-label">Prix:</div>
-          <div class="product-price" id="display-price"></div>
-          <div class="product-barcode" id="display-barcode"></div>
+      </div>
+      
+      <div class="admin-form">
+        <div class="form-group">
+          <label for="search-product">Nom du Produit</label>
+          <input type="text" id="search-product" placeholder="Entrez le nom du produit">
+          <div class="suggestion-box" id="product-suggestions"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="new-price">Nouveau Prix (TND)</label>
+          <input type="number" id="new-price" placeholder="Nouveau prix en dinar tunisien" step="0.001" min="0">
+        </div>
+        
+        <div class="admin-controls">
+          <button class="admin-btn update-btn" id="update-product">
+            <i class="fas fa-sync-alt"></i> Mettre à Jour
+          </button>
         </div>
       </div>
     </div>
@@ -663,61 +468,53 @@
     const database = firebase.database();
     
     // DOM elements
-    const startScanBtn = document.getElementById('start-scan');
-    const stopScanBtn = document.getElementById('stop-scan');
-    const scannerVideo = document.getElementById('scanner-video');
-    const saveProductBtn = document.getElementById('save-product');
-    const updateProductBtn = document.getElementById('update-product');
     const productNameInput = document.getElementById('product-name');
     const productPriceInput = document.getElementById('product-price');
     const barcodeInput = document.getElementById('barcode');
-    const searchInput = document.getElementById('search-input');
-    const searchBtn = document.getElementById('search-btn');
-    const searchResults = document.getElementById('search-results');
-    const productDisplay = document.getElementById('product-display');
-    const displayName = document.getElementById('display-name');
-    const displayPrice = document.getElementById('display-price');
-    const displayBarcode = document.getElementById('display-barcode');
-    const displayImage = document.getElementById('display-image');
+    const saveProductBtn = document.getElementById('save-product');
+    const searchProductInput = document.getElementById('search-product');
+    const newPriceInput = document.getElementById('new-price');
+    const updateProductBtn = document.getElementById('update-product');
+    const startCameraBtn = document.getElementById('start-camera');
+    const capturePhotoBtn = document.getElementById('capture-photo');
+    const cameraView = document.getElementById('camera-view');
+    const adminResolution = document.getElementById('admin-resolution');
+    const adminFps = document.getElementById('admin-fps');
     const toast = document.getElementById('toast');
-    const nameSuggestions = document.getElementById('name-suggestions');
+    const productSuggestions = document.getElementById('product-suggestions');
     
     // Variables
-    let stream = null;
-    let model = null;
-    let scanInterval = null;
+    let cameraStream = null;
     let productsCache = {};
+    let selectedProduct = null;
     
-    // Load MobileNet model
-    async function loadModel() {
-      try {
-        model = await mobilenet.load();
-        showToast('Modèle IA chargé avec succès!', 'success');
-      } catch (error) {
-        console.error('Erreur de chargement du modèle:', error);
-        showToast('Erreur de chargement du modèle IA', 'error');
-      }
-    }
+    // Resolution mapping
+    const resolutions = {
+      '480p': { width: 640, height: 480 },
+      '720p': { width: 1280, height: 720 },
+      '1080p': { width: 1920, height: 1080 }
+    };
     
-    // Start visual scanning
-    async function startScan() {
+    // Start admin camera
+    async function startAdminCamera() {
       try {
+        // Get selected settings
+        const resolution = adminResolution.value;
+        const fps = parseInt(adminFps.value);
+        const res = resolutions[resolution];
+        
         // Get camera access
-        stream = await navigator.mediaDevices.getUserMedia({ 
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 }
+            width: { ideal: res.width },
+            height: { ideal: res.height },
+            frameRate: { ideal: fps, max: fps }
           } 
         });
         
-        scannerVideo.srcObject = stream;
-        startScanBtn.style.display = 'none';
-        stopScanBtn.style.display = 'flex';
-        
-        // Start scanning every 2 seconds
-        scanInterval = setInterval(scanProduct, 2000);
+        cameraView.srcObject = cameraStream;
+        showToast(`Caméra démarrée (${resolution} @ ${fps} IPS)`, 'success');
         
       } catch (error) {
         console.error('Erreur de caméra:', error);
@@ -725,63 +522,15 @@
       }
     }
     
-    // Stop scanning
-    function stopScan() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
+    // Capture product photo
+    function captureProductPhoto() {
+      if (!cameraStream) {
+        showToast('Veuillez d\'abord démarrer la caméra', 'error');
+        return;
       }
       
-      if (scanInterval) {
-        clearInterval(scanInterval);
-        scanInterval = null;
-      }
-      
-      startScanBtn.style.display = 'flex';
-      stopScanBtn.style.display = 'none';
-    }
-    
-    // Scan product using AI
-    async function scanProduct() {
-      if (!model) return;
-      
-      try {
-        // Classify the current video frame
-        const predictions = await model.classify(scannerVideo);
-        
-        if (predictions.length > 0) {
-          // Get top prediction
-          const topPrediction = predictions[0].className;
-          
-          // Search for matching products
-          const matchedProducts = findMatchingProducts(topPrediction);
-          
-          if (matchedProducts.length > 0) {
-            // Display the first matching product
-            displayProduct(matchedProducts[0]);
-            stopScan();
-          }
-        }
-      } catch (error) {
-        console.error('Erreur de scan:', error);
-      }
-    }
-    
-    // Find products matching the AI prediction
-    function findMatchingProducts(prediction) {
-      const searchTerm = prediction.toLowerCase();
-      const matches = [];
-      
-      for (const id in productsCache) {
-        const product = productsCache[id];
-        const productName = product.name.toLowerCase();
-        
-        if (productName.includes(searchTerm)) {
-          matches.push({...product, id});
-        }
-      }
-      
-      return matches;
+      // In a real app, this would capture and convert to base64
+      showToast('Photo capturée avec succès!', 'success');
     }
     
     // Save new product
@@ -809,9 +558,6 @@
         const newProductRef = database.ref('products').push();
         await newProductRef.set(product);
         
-        // Update cache
-        productsCache[newProductRef.key] = product;
-        
         // Clear form
         productNameInput.value = '';
         productPriceInput.value = '';
@@ -827,39 +573,35 @@
     
     // Update existing product
     async function updateProduct() {
-      const name = productNameInput.value.trim();
-      const price = parseFloat(productPriceInput.value);
+      const name = searchProductInput.value.trim();
+      const price = parseFloat(newPriceInput.value);
       
       if (!name || isNaN(price) || price <= 0) {
         showToast('Veuillez entrer un nom et un prix valide', 'error');
         return;
       }
       
+      if (!selectedProduct) {
+        showToast('Veuillez sélectionner un produit', 'error');
+        return;
+      }
+      
       try {
-        // Find product by name
-        let productId = null;
-        for (const id in productsCache) {
-          if (productsCache[id].name.toLowerCase() === name.toLowerCase()) {
-            productId = id;
-            break;
-          }
-        }
-        
-        if (!productId) {
-          showToast('Produit non trouvé', 'error');
-          return;
-        }
-        
         // Update product
         const updates = {
           price: price,
           timestamp: Date.now()
         };
         
-        await database.ref(`products/${productId}`).update(updates);
+        await database.ref(`products/${selectedProduct.id}`).update(updates);
         
         // Update cache
-        productsCache[productId].price = price;
+        productsCache[selectedProduct.id].price = price;
+        
+        // Clear form
+        searchProductInput.value = '';
+        newPriceInput.value = '';
+        selectedProduct = null;
         
         showToast('Prix mis à jour avec succès!', 'success');
         
@@ -869,63 +611,13 @@
       }
     }
     
-    // Search products
-    function searchProducts() {
-      const query = searchInput.value.trim().toLowerCase();
-      searchResults.innerHTML = '';
-      
-      if (query.length < 2) {
-        searchResults.style.display = 'none';
-        return;
-      }
-      
-      const results = [];
-      
-      // Search through products
-      for (const id in productsCache) {
-        const product = productsCache[id];
-        const productName = product.name.toLowerCase();
-        
-        if (productName.includes(query)) {
-          results.push({...product, id});
-        }
-      }
-      
-      if (results.length === 0) {
-        searchResults.style.display = 'none';
-        return;
-      }
-      
-      // Display results
-      results.slice(0, 5).forEach(product => {
-        const resultItem = document.createElement('div');
-        resultItem.className = 'search-result-item';
-        resultItem.innerHTML = `
-          <img class="result-img" src="https://via.placeholder.com/100?text=Product" alt="${product.name}">
-          <div class="result-info">
-            <div class="result-name">${product.name}</div>
-            <div class="result-price">${product.price.toFixed(3)} TND</div>
-          </div>
-        `;
-        
-        resultItem.addEventListener('click', () => {
-          displayProduct(product);
-          searchResults.style.display = 'none';
-        });
-        
-        searchResults.appendChild(resultItem);
-      });
-      
-      searchResults.style.display = 'block';
-    }
-    
     // Show product suggestions for admin
-    function showNameSuggestions() {
-      const query = productNameInput.value.trim().toLowerCase();
-      nameSuggestions.innerHTML = '';
+    function showProductSuggestions() {
+      const query = searchProductInput.value.trim().toLowerCase();
+      productSuggestions.innerHTML = '';
       
-      if (query.length < 2) {
-        nameSuggestions.style.display = 'none';
+      if (query.length === 0) {
+        productSuggestions.style.display = 'none';
         return;
       }
       
@@ -937,43 +629,32 @@
         const productName = product.name.toLowerCase();
         
         if (productName.includes(query)) {
-          suggestions.push(product.name);
+          suggestions.push({id, name: product.name});
         }
       }
       
       if (suggestions.length === 0) {
-        nameSuggestions.style.display = 'none';
+        productSuggestions.style.display = 'none';
         return;
       }
       
       // Display suggestions
-      suggestions.slice(0, 5).forEach(name => {
+      suggestions.slice(0, 5).forEach(item => {
         const suggestionItem = document.createElement('div');
         suggestionItem.className = 'suggestion-item';
-        suggestionItem.textContent = name;
+        suggestionItem.textContent = item.name;
         
         suggestionItem.addEventListener('click', () => {
-          productNameInput.value = name;
-          nameSuggestions.style.display = 'none';
+          searchProductInput.value = item.name;
+          newPriceInput.value = productsCache[item.id].price.toFixed(3);
+          selectedProduct = {id: item.id, ...productsCache[item.id]};
+          productSuggestions.style.display = 'none';
         });
         
-        nameSuggestions.appendChild(suggestionItem);
+        productSuggestions.appendChild(suggestionItem);
       });
       
-      nameSuggestions.style.display = 'block';
-    }
-    
-    // Display product details
-    function displayProduct(product) {
-      displayName.textContent = product.name;
-      displayPrice.textContent = `${product.price.toFixed(3)} TND`;
-      displayBarcode.textContent = product.barcode ? `Code-barres: ${product.barcode}` : '';
-      
-      // Placeholder image - in a real app, you'd use the actual product image
-      displayImage.src = `https://via.placeholder.com/500/4361ee/ffffff?text=${encodeURIComponent(product.name)}`;
-      
-      productDisplay.style.display = 'block';
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      productSuggestions.style.display = 'block';
     }
     
     // Show toast notification
@@ -1002,37 +683,31 @@
     function loadProducts() {
       database.ref('products').on('value', (snapshot) => {
         productsCache = snapshot.val() || {};
-        showToast('Produits chargés avec succès', 'success');
       });
     }
     
-    // Initialize the app
-    function initApp() {
-      // Load AI model
-      loadModel();
-      
+    // Initialize the admin app
+    function initAdminApp() {
       // Load products
       loadProducts();
       
       // Set up event listeners
-      startScanBtn.addEventListener('click', startScan);
-      stopScanBtn.addEventListener('click', stopScan);
+      startCameraBtn.addEventListener('click', startAdminCamera);
+      capturePhotoBtn.addEventListener('click', captureProductPhoto);
       saveProductBtn.addEventListener('click', saveProduct);
       updateProductBtn.addEventListener('click', updateProduct);
-      searchBtn.addEventListener('click', searchProducts);
-      searchInput.addEventListener('input', searchProducts);
-      productNameInput.addEventListener('input', showNameSuggestions);
+      searchProductInput.addEventListener('input', showProductSuggestions);
       
       // Close suggestions when clicking away
       document.addEventListener('click', (e) => {
-        if (!nameSuggestions.contains(e.target) && e.target !== productNameInput) {
-          nameSuggestions.style.display = 'none';
+        if (!productSuggestions.contains(e.target) && e.target !== searchProductInput) {
+          productSuggestions.style.display = 'none';
         }
       });
     }
     
-    // Start the app when page loads
-    window.addEventListener('DOMContentLoaded', initApp);
+    // Start the admin app when page loads
+    window.addEventListener('DOMContentLoaded', initAdminApp);
   </script>
 </body>
 </html>
