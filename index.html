@@ -66,30 +66,6 @@
       pointer-events: none;
     }
 
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      pointer-events: none;
-    }
-
-    .particle {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(138, 43, 226, 0.3);
-      animation: float 15s infinite ease-in-out;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0); }
-      25% { transform: translate(20px, 40px); }
-      50% { transform: translate(40px, 0); }
-      75% { transform: translate(20px, -40px); }
-    }
-
     .container {
       max-width: 100%;
       margin: 0 auto;
@@ -182,6 +158,29 @@
     .admin-btn:hover {
       color: white;
       box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+    }
+
+    .download-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--secondary);
+      color: var(--on-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 50;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-3px) rotate(15deg);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
     }
 
     .search-container {
@@ -423,6 +422,18 @@
       border: 1px solid rgba(0, 210, 255, 0.2);
     }
 
+    .timer-bar {
+      height: 4px;
+      background: var(--secondary);
+      width: 100%;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      transform-origin: left;
+      transform: scaleX(1);
+      transition: transform 1s linear;
+    }
+
     /* Modal Styles */
     .modal {
       display: none;
@@ -626,6 +637,14 @@
       .product-header {
         padding: 15px;
       }
+      
+      .download-btn {
+        top: 15px;
+        right: 15px;
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
     }
     
     @media (max-width: 480px) {
@@ -674,8 +693,10 @@
   </style>
 </head>
 <body>
-  <!-- Animated background particles -->
-  <div class="particles" id="particles"></div>
+  <!-- Download data button -->
+  <div class="download-btn" id="download-btn" title="Download data for offline use">
+    <i class="fas fa-download"></i>
+  </div>
   
   <div class="container">
     <header>
@@ -760,6 +781,7 @@
     const suggestionsContainer = document.getElementById('suggestions');
     const productsContainer = document.getElementById('products-container');
     const adminBtn = document.getElementById('admin-btn');
+    const downloadBtn = document.getElementById('download-btn');
     const loginModal = document.getElementById('login-modal');
     const closeLogin = document.getElementById('close-login');
     const cancelLogin = document.getElementById('cancel-login');
@@ -767,48 +789,22 @@
     const loginEmail = document.getElementById('login-email');
     const loginPassword = document.getElementById('login-password');
     const toast = document.getElementById('toast');
-    const particlesContainer = document.getElementById('particles');
 
     // Variables
     let products = [];
     let displayedProducts = [];
     let productRef;
-
-    // Create animated particles
-    function createParticles() {
-      const particleCount = 25;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        
-        // Random properties
-        const size = Math.random() * 15 + 5;
-        const posX = Math.random() * 100;
-        const posY = Math.random() * 100;
-        const delay = Math.random() * 10;
-        const duration = 10 + Math.random() * 20;
-        
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${posX}%`;
-        particle.style.top = `${posY}%`;
-        particle.style.animationDelay = `${delay}s`;
-        particle.style.animationDuration = `${duration}s`;
-        
-        particlesContainer.appendChild(particle);
-      }
-    }
+    let offlineData = null;
 
     // Event listeners
     searchInput.addEventListener('input', handleSearch);
     adminBtn.addEventListener('click', showLoginModal);
+    downloadBtn.addEventListener('click', downloadDataForOffline);
     closeLogin.addEventListener('click', hideLoginModal);
     cancelLogin.addEventListener('click', hideLoginModal);
     confirmLogin.addEventListener('click', handleLogin);
 
     // Initialize
-    createParticles();
     initFirebase();
 
     // Functions
@@ -834,11 +830,12 @@
     function loadSampleProducts() {
       // Add sample products if none exist
       const sampleProducts = [
-        { name: "Premium Coffee", price: 15.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ECoffee%3C/text%3E%3C/svg%3E", barcode: "123456789" },
-        { name: "Organic Honey", price: 25.490, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EHoney%3C/text%3E%3C/svg%3E", barcode: "234567890" },
-        { name: "Water Bottle", price: 8.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%2300d2ff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EBottle%3C/text%3E%3C/svg%3E", barcode: "345678901" },
-        { name: "قهوة تركية", price: 18.500, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻖﻫﻮﺓ%3C/text%3E%3C/svg%3E", barcode: "456789012" },
-        { name: "عسل طبيعي", price: 32.750, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻊﺳﻞ%3C/text%3E%3C/svg%3E", barcode: "567890123" }
+        { name: "قهوة تركية", price: 15.990, barcode: "123456789" },
+        { name: "عسل طبيعي", price: 32.750, barcode: "234567890" },
+        { name: "مياه معبأة", price: 8.990, barcode: "345678901" },
+        { name: "Premium Coffee", price: 15.990, barcode: "456789012" },
+        { name: "Organic Honey", price: 25.490, barcode: "567890123" },
+        { name: "Water Bottle", price: 8.990, barcode: "678901234" }
       ];
       
       sampleProducts.forEach(product => {
@@ -875,7 +872,6 @@
         const suggestionItem = document.createElement('div');
         suggestionItem.className = 'suggestion-item';
         suggestionItem.innerHTML = `
-          <img src="${product.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Crect fill=\'%238a2be2\' width=\'100\' height=\'100\'/%3E%3C/svg%3E'}" class="suggestion-img" alt="${product.name}">
           <div class="suggestion-info">
             <div class="suggestion-name ${product.name.match(/[\u0600-\u06FF]/) ? 'arabic-text' : ''}">${product.name}</div>
             <div class="suggestion-price">TND ${product.price.toFixed(3)}</div>
@@ -897,20 +893,22 @@
         return;
       }
       
-      // Limit to 2 products displayed at once
+      // If we already have 2 products, remove the oldest one
       if (displayedProducts.length >= 2) {
-        // Animate out the oldest product
-        const oldestProduct = document.querySelector(`.product-card[data-id="${displayedProducts[0].id}"]`);
-        if (oldestProduct) {
-          oldestProduct.style.animation = 'cardDisappear 0.5s forwards';
-          setTimeout(() => {
-            displayedProducts.shift(); // Remove the oldest product
-            renderProducts();
-          }, 500);
-        }
+        const oldestProduct = displayedProducts[0];
+        removeProductById(oldestProduct.id);
       }
       
-      displayedProducts.push(product);
+      // Add the new product with timer
+      const productWithTimer = {
+        ...product,
+        timerId: setTimeout(() => {
+          removeProductById(product.id);
+          showToast(`"${product.name}" was automatically removed after 60 seconds`, 'warning');
+        }, 60000)
+      };
+      
+      displayedProducts.push(productWithTimer);
       renderProducts();
     }
 
@@ -936,13 +934,18 @@
               </button>
             </div>
           </div>
-          ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : ''}
-          <div class="product-content">
-            ${product.barcode ? `<div class="product-barcode">${product.barcode}</div>` : ''}
-          </div>
+          <div class="timer-bar" id="timer-${product.id}"></div>
         `;
         
         productsContainer.appendChild(productCard);
+        
+        // Start the timer bar animation
+        const timerBar = document.getElementById(`timer-${product.id}`);
+        timerBar.style.transform = 'scaleX(0)';
+        timerBar.style.transition = 'transform 60s linear';
+        setTimeout(() => {
+          timerBar.style.transform = 'scaleX(0)';
+        }, 10);
       });
 
       // Add event listeners to new buttons
@@ -960,22 +963,40 @@
       const productCard = document.querySelector(`.product-card[data-id="${productId}"]`);
       
       if (productCard) {
+        const isMinimized = productCard.classList.contains('minimized');
         productCard.classList.toggle('minimized');
-        showToast('Product minimized', 'success');
+        
+        if (isMinimized) {
+          showToast('Product expanded', 'success');
+        } else {
+          showToast('Product minimized', 'success');
+        }
       }
     }
 
     function removeProduct(e) {
       const productId = e.target.closest('.action-btn').getAttribute('data-id');
-      const productCard = document.querySelector(`.product-card[data-id="${productId}"]`);
+      removeProductById(productId);
+    }
+    
+    function removeProductById(productId) {
+      const productIndex = displayedProducts.findIndex(p => p.id === productId);
       
-      if (productCard) {
-        productCard.style.animation = 'cardDisappear 0.5s forwards';
-        setTimeout(() => {
-          displayedProducts = displayedProducts.filter(p => p.id !== productId);
-          renderProducts();
-        }, 500);
+      if (productIndex !== -1) {
+        // Clear the timer
+        clearTimeout(displayedProducts[productIndex].timerId);
+        // Remove from array
+        displayedProducts.splice(productIndex, 1);
+        // Re-render
+        renderProducts();
       }
+    }
+
+    function downloadDataForOffline() {
+      // Save data to localStorage for offline use
+      localStorage.setItem('offlineProducts', JSON.stringify(products));
+      offlineData = products;
+      showToast('Products downloaded for offline use', 'success');
     }
 
     function showLoginModal() {
@@ -1032,6 +1053,14 @@
       }
     `;
     document.head.appendChild(style);
+    
+    // Load offline data if available
+    window.addEventListener('load', () => {
+      const savedData = localStorage.getItem('offlineProducts');
+      if (savedData) {
+        offlineData = JSON.parse(savedData);
+      }
+    });
   </script>
 </body>
 </html>
