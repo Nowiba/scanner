@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | NexusScan</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <style>
+    :root {
+      --primary: #8A2BE2;
+      --primary-dark: #6A1E9E;
+      --primary-light: #A45CFF;
+      --secondary: #00D2FF;
+      --accent: #FF2A6D;
+      --background: linear-gradient(135deg, #0F0C29, #302B63, #24243E);
+      --surface: rgba(30, 30, 50, 0.7);
+      --surface-solid: rgba(30, 30, 50, 1);
+      --on-primary: #FFFFFF;
+      --on-secondary: #000000;
+      --on-surface: #E0E0FF;
+      --success: #00E676;
+      --error: #FF4081;
+      --warning: #FFD600;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--background);
+      color: var(--on-surface);
+      min-height: 100vh;
+      padding: 15px;
+      position: relative;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 40%), 
+                  radial-gradient(circle at 80% 70%, rgba(0, 210, 255, 0.1) 0%, transparent 40%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(138, 43, 226, 0.3);
+      animation: float 15s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(20px, 40px); }
+      50% { transform: translate(40px, 0); }
+      75% { transform: translate(20px, -40px); }
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--glass-border);
+      animation: slideDown 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 45px;
+      height: 45px;
+      background: var(--primary);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--on-primary);
+      box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
+    }
+
+    .logo-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 2px solid var(--error);
+      color: var(--error);
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(5px);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .logout-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: var(--error);
+      transition: width 0.5s ease;
+      z-index: -1;
+    }
+
+    .logout-btn:hover::before {
+      width: 100%;
+    }
+
+    .logout-btn:hover {
+      color: white;
+      box-shadow: 0 0 15px rgba(255, 64, 129, 0.7);
+    }
+
+    .panel-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 25px;
+    }
+
+    @media (min-width: 992px) {
+      .panel-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .panel-section {
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 25px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--glass-border);
+      transition: var(--transition);
+      animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header {
+      padding: 22px;
+      background: linear-gradient(to right, var(--primary), var(--primary-dark));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .panel-content {
+      padding: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: var(--on-surface);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 16px 22px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      font-size: 15px;
+      color: var(--on-surface);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .form-row {
+        flex-direction: row;
+        gap: 15px;
+      }
+      
+      .form-row .form-group {
+        flex: 1;
+        margin-bottom: 0;
+      }
+    }
+
+    .image-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      border: 2px dashed var(--glass-border);
+      border-radius: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .image-upload:hover {
+      border-color: var(--primary);
+      background: rgba(138, 43, 226, 0.1);
+    }
+
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+
+    .btn {
+      padding: 14px 30px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+      transform: translateY(-3px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--on-surface);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px);
+    }
+
+    .search-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    #product-search {
+      width: 100%;
+      padding: 16px 22px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      font-size: 15px;
+      color: var(--on-surface);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    #product-search:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
+    }
+
+    .products-list {
+      max-height: 500px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .product-item {
+      display: flex;
+      align-items: center;
+      padding: 18px;
+      margin-bottom: 15px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      border: 1px solid var(--glass-border);
+      transition: var(--transition);
+    }
+
+    .product-item:hover {
+      transform: translateX(5px);
+      border-color: var(--primary);
+    }
+
+    .product-image {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-right: 15px;
+    }
+
+    .product-info {
+      flex: 1;
+    }
+
+    .product-name {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .product-details {
+      display: flex;
+      gap: 15px;
+      color: var(--secondary);
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      color: var(--on-surface);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .action-btn:hover {
+      transform: rotate(15deg);
+    }
+
+    .edit-btn:hover {
+      background: var(--secondary);
+      color: var(--on-secondary);
+    }
+
+    .delete-btn:hover {
+      background: var(--error);
+      color: white;
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      padding: 18px 25px;
+      border-radius: 15px;
+      color: white;
+      font-weight: 500;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transform: translateY(100px);
+      transition: transform 0.4s, opacity 0.4s;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 90%;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      background: rgba(0, 230, 118, 0.2);
+      border-left: 5px solid var(--success);
+    }
+
+    .toast.error {
+      background: rgba(255, 64, 129, 0.2);
+      border-left: 5px solid var(--error);
+    }
+
+    .toast.warning {
+      background: rgba(255, 214, 0, 0.2);
+      border-left: 5px solid var(--warning);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .logout-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 5px;
+      }
+      
+      header {
+        padding: 12px;
+        margin-bottom: 15px;
+      }
+      
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+      
+      .logo-text {
+        font-size: 20px;
+      }
+    }
+    
+    /* Arabic support for product names */
+    .arabic-text {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated background particles -->
+  <div class="particles" id="particles"></div>
+  
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-cogs"></i>
+        </div>
+        <h1 class="logo-text">Admin Panel</h1>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </header>
+    
+    <div class="panel-container">
+      <div class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Add/Edit Product</h2>
+        </div>
+        <div class="panel-content">
+          <form id="product-form">
+            <div class="form-group">
+              <label for="product-name"><i class="fas fa-tag"></i> Product Name</label>
+              <input type="text" id="product-name" class="form-input" placeholder="Enter product name" required>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="product-price"><i class="fas fa-dollar-sign"></i> Price (TND)</label>
+                <input type="number" id="product-price" class="form-input" placeholder="0.000" step="0.001" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="product-barcode"><i class="fas fa-barcode"></i> Barcode</label>
+                <input type="text" id="product-barcode" class="form-input" placeholder="Enter barcode">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="product-image"><i class="fas fa-image"></i> Product Image</label>
+              <div class="image-upload" id="image-upload">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 36px; color: var(--primary-light);"></i>
+                <p>Click to upload or drag and drop</p>
+                <p style="font-size: 14px; opacity: 0.7;">PNG, JPG, GIF (max 2MB)</p>
+                <img id="image-preview" class="image-preview" alt="Image preview">
+              </div>
+              <input type="file" id="product-image" accept="image/*" style="display: none;">
+            </div>
+            
+            <div class="form-actions">
+              <button type="reset" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Clear
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Product
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Manage Products</h2>
+        </div>
+        <div class="panel-content">
+          <div class="search-container">
+            <input type="text" id="product-search" placeholder="Search products...">
+          </div>
+          
+          <div class="products-list" id="products-list">
+            <!-- Product list will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCL9MoGTY4elBrv0nH5t4tKNwbDc3uWUik",
+      authDomain: "scan-ftw.firebaseapp.com",
+      databaseURL: "https://scan-ftw-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "scan-ftw",
+      storageBucket: "scan-ftw.firebasestorage.app",
+      messagingSenderId: "468232549663",
+      appId: "1:468232549663:web:793580be90379902f8ac2a"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
+
+    // DOM elements
+    const logoutBtn = document.getElementById('logout-btn');
+    const productForm = document.getElementById('product-form');
+    const productName = document.getElementById('product-name');
+    const productPrice = document.getElementById('product-price');
+    const productBarcode = document.getElementById('product-barcode');
+    const productImage = document.getElementById('product-image');
+    const imageUpload = document.getElementById('image-upload');
+    const imagePreview = document.getElementById('image-preview');
+    const productSearch = document.getElementById('product-search');
+    const productsList = document.getElementById('products-list');
+    const toast = document.getElementById('toast');
+    const particlesContainer = document.getElementById('particles');
+
+    // Variables
+    let products = [];
+    let currentEditId = null;
+    let productRef;
+    let imageFile = null;
+
+    // Event listeners
+    logoutBtn.addEventListener('click', handleLogout);
+    productForm.addEventListener('submit', handleProductSubmit);
+    imageUpload.addEventListener('click', () => productImage.click());
+    productImage.addEventListener('change', handleImageUpload);
+    productSearch.addEventListener('input', filterProducts);
+
+    // Initialize
+    checkAuthState();
+    createParticles();
+    initFirebase();
+
+    // Functions
+    function createParticles() {
+      const particleCount = 20;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Random properties
+        const size = Math.random() * 15 + 5;
+        const posX = Math.random() * 100;
+        const posY = Math.random() * 100;
+        const delay = Math.random() * 10;
+        const duration = 10 + Math.random() * 20;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.top = `${posY}%`;
+        particle.style.animationDelay = `${delay}s`;
+        particle.style.animationDuration = `${duration}s`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    function checkAuthState() {
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          // Redirect to index.html if not logged in
+          window.location.href = 'index.html';
+        }
+      });
+    }
+
+    function initFirebase() {
+      // Set up database listener
+      productRef = database.ref('products');
+      productRef.on('value', snapshot => {
+        products = [];
+        snapshot.forEach(childSnapshot => {
+          products.push({
+            id: childSnapshot.key,
+            ...childSnapshot.val()
+          });
+        });
+        renderProducts(products);
+      });
+    }
+
+    function handleLogout() {
+      auth.signOut().then(() => {
+        window.location.href = 'index.html';
+      }).catch(error => {
+        showToast(error.message, 'error');
+      });
+    }
+
+    function handleProductSubmit(e) {
+      e.preventDefault();
+      
+      const name = productName.value.trim();
+      const price = parseFloat(productPrice.value);
+      const barcode = productBarcode.value.trim();
+      
+      if (!name || isNaN(price)) {
+        showToast('Name and price are required', 'error');
+        return;
+      }
+      
+      const productData = {
+        name,
+        price,
+        barcode: barcode || null
+      };
+      
+      // Handle image compression and upload
+      if (imageFile) {
+        compressImage(imageFile, (compressedImage) => {
+          productData.image = compressedImage;
+          saveProduct(productData);
+        });
+      } else {
+        saveProduct(productData);
+      }
+    }
+
+    function compressImage(file, callback) {
+      const reader = new FileReader();
+      
+      reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set max dimensions for compression
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with quality setting
+          const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
+          callback(compressedImage);
+        };
+      };
+      
+      reader.readAsDataURL(file);
+    }
+
+    function saveProduct(productData) {
+      if (currentEditId) {
+        // Update existing product
+        database.ref(`products/${currentEditId}`).update(productData)
+          .then(() => {
+            showToast('Product updated successfully', 'success');
+            resetForm();
+          })
+          .catch(error => {
+            showToast(error.message, 'error');
+          });
+      } else {
+        // Check if product with this name already exists
+        const existingProduct = products.find(p => p.name.toLowerCase() === name.toLowerCase());
+        
+        if (existingProduct) {
+          // Update existing product
+          database.ref(`products/${existingProduct.id}`).update(productData)
+            .then(() => {
+              showToast('Product updated successfully', 'success');
+              resetForm();
+            })
+            .catch(error => {
+              showToast(error.message, 'error');
+            });
+        } else {
+          // Add new product
+          productRef.push(productData)
+            .then(() => {
+              showToast('Product added successfully', 'success');
+              resetForm();
+            })
+            .catch(error => {
+              showToast(error.message, 'error');
+            });
+        }
+      }
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.match('image.*')) {
+        showToast('Please select an image file', 'error');
+        return;
+      }
+      
+      if (file.size > 2 * 1024 * 1024) { // 2MB
+        showToast('Image size exceeds 2MB limit', 'error');
+        return;
+      }
+      
+      imageFile = file;
+      
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        imagePreview.src = event.target.result;
+        imagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderProducts(productsToRender) {
+      productsList.innerHTML = '';
+      
+      if (productsToRender.length === 0) {
+        productsList.innerHTML = '<p style="text-align: center; padding: 30px;">No products found</p>';
+        return;
+      }
+      
+      productsToRender.forEach(product => {
+        const productItem = document.createElement('div');
+        productItem.className = 'product-item';
+        productItem.innerHTML = `
+          ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : '<div class="product-image" style="background: rgba(138, 43, 226, 0.1); display: flex; align-items: center; justify-content: center;"><i class="fas fa-image" style="font-size: 24px; color: var(--primary-light);"></i></div>'}
+          <div class="product-info">
+            <div class="product-name ${product.name.match(/[\u0600-\u06FF]/) ? 'arabic-text' : ''}">${product.name}</div>
+            <div class="product-details">
+              <div>TND ${product.price.toFixed(3)}</div>
+              ${product.barcode ? `<div>Barcode: ${product.barcode}</div>` : ''}
+            </div>
+          </div>
+          <div class="product-actions">
+            <button class="action-btn edit-btn" data-id="${product.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn delete-btn" data-id="${product.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        productsList.appendChild(productItem);
+      });
+      
+      // Add event listeners to buttons
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', editProduct);
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', deleteProduct);
+      });
+    }
+
+    function editProduct(e) {
+      const productId = e.target.closest('.action-btn').getAttribute('data-id');
+      const product = products.find(p => p.id === productId);
+      
+      if (product) {
+        currentEditId = productId;
+        productName.value = product.name;
+        productPrice.value = product.price;
+        productBarcode.value = product.barcode || '';
+        
+        if (product.image) {
+          imagePreview.src = product.image;
+          imagePreview.style.display = 'block';
+        } else {
+          imagePreview.style.display = 'none';
+        }
+        
+        // Scroll to form
+        document.getElementById('product-form').scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    }
+
+    function deleteProduct(e) {
+      const productId = e.target.closest('.action-btn').getAttribute('data-id');
+      const product = products.find(p => p.id === productId);
+      
+      if (product) {
+        showToast(`Deleting "${product.name}"...`, 'warning');
+        
+        setTimeout(() => {
+          database.ref(`products/${productId}`).remove()
+            .then(() => {
+              showToast('Product deleted successfully', 'success');
+              if (currentEditId === productId) {
+                resetForm();
+              }
+            })
+            .catch(error => {
+              showToast(error.message, 'error');
+            });
+        }, 500);
+      }
+    }
+
+    function filterProducts() {
+      const searchTerm = productSearch.value.toLowerCase();
+      
+      if (searchTerm.length === 0) {
+        renderProducts(products);
+        return;
+      }
+      
+      const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        (product.barcode && product.barcode.toLowerCase().includes(searchTerm)) ||
+        product.price.toString().includes(searchTerm)
+      );
+      
+      renderProducts(filteredProducts);
+    }
+
+    function resetForm() {
+      productForm.reset();
+      currentEditId = null;
+      imagePreview.src = '';
+      imagePreview.style.display = 'none';
+      productImage.value = '';
+      imageFile = null;
+    }
+
+    function showToast(message, type) {
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
