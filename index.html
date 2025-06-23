@@ -3,711 +3,1035 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <title>NexusScan | Premium Product Scanner</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <style>
     :root {
-      --primary: #4361ee;
-      --secondary: #3f37c9;
-      --success: #4cc9f0;
-      --danger: #f72585;
-      --dark: #1d3557;
-      --light: #f1faee;
-      --card-bg: rgba(255, 255, 255, 0.95);
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      --primary: #8A2BE2;
+      --primary-dark: #6A1E9E;
+      --primary-light: #A45CFF;
+      --secondary: #00D2FF;
+      --accent: #FF2A6D;
+      --background: linear-gradient(135deg, #0F0C29, #302B63, #24243E);
+      --surface: rgba(30, 30, 50, 0.7);
+      --surface-solid: rgba(30, 30, 50, 1);
+      --on-primary: #FFFFFF;
+      --on-secondary: #000000;
+      --on-surface: #E0E0FF;
+      --success: #00E676;
+      --error: #FF4081;
+      --warning: #FFD600;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, sans-serif;
     }
-    
+
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
     body {
-      background: linear-gradient(135deg, #1d3557, #457b9d);
-      color: #333;
+      font-family: 'Poppins', sans-serif;
+      background: var(--background);
+      color: var(--on-surface);
       min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding: 15px;
+      position: relative;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    
-    .container {
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      max-width: 800px;
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
+      height: 100%;
+      background: radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 40%), 
+                  radial-gradient(circle at 80% 70%, rgba(0, 210, 255, 0.1) 0%, transparent 40%);
+      z-index: -1;
+      pointer-events: none;
     }
-    
+
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(138, 43, 226, 0.3);
+      animation: float 15s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(20px, 40px); }
+      50% { transform: translate(40px, 0); }
+      75% { transform: translate(20px, -40px); }
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(29, 53, 87, 0.9);
+      margin-bottom: 25px;
+      padding: 15px;
+      background: var(--surface);
       backdrop-filter: blur(10px);
-      padding: 15px 25px;
-      border-radius: 15px;
+      border-radius: 20px;
       box-shadow: var(--shadow);
-      color: white;
-      animation: slideDown 0.6s ease-out;
+      border: 1px solid var(--glass-border);
+      animation: slideDown 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    
+
+    @keyframes slideDown {
+      from { transform: translateY(-100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
     .logo {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    
-    .logo i {
-      font-size: 2rem;
-      color: var(--success);
+
+    .logo-icon {
+      width: 45px;
+      height: 45px;
+      background: var(--primary);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--on-primary);
+      box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
     }
-    
-    .logo h1 {
-      font-size: 1.8rem;
+
+    .logo-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
       font-weight: 700;
-      background: linear-gradient(to right, #4cc9f0, #90e0ef);
+      background: linear-gradient(to right, var(--primary), var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
     }
-    
-    .back-btn {
+
+    .admin-btn {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(5px);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .admin-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: var(--primary);
+      transition: width 0.5s ease;
+      z-index: -1;
+    }
+
+    .admin-btn:hover::before {
+      width: 100%;
+    }
+
+    .admin-btn:hover {
+      color: white;
+      box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+    }
+
+    .search-container {
+      position: relative;
+      margin-bottom: 25px;
+      animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 50px;
+      padding: 5px 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--glass-border);
+      transition: var(--transition);
+    }
+
+    .search-box:focus-within {
+      box-shadow: 0 0 25px rgba(138, 43, 226, 0.4);
+      border-color: var(--primary);
+    }
+
+    .search-icon {
+      font-size: 18px;
+      color: var(--primary-light);
+      margin-right: 8px;
+    }
+
+    #search {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 16px 8px;
+      font-size: 16px;
+      color: var(--on-surface);
+      outline: none;
+      height: 50px;
+    }
+
+    #search::placeholder {
+      color: rgba(224, 224, 255, 0.5);
+    }
+
+    .suggestions {
+      position: absolute;
+      width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
+      background: var(--surface-solid);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      margin-top: 8px;
+      z-index: 10;
+      display: none;
+      border: 1px solid var(--glass-border);
+      animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-origin: top;
+    }
+
+    @keyframes scaleIn {
+      from { transform: scaleY(0); opacity: 0; }
+      to { transform: scaleY(1); opacity: 1; }
+    }
+
+    .suggestion-item {
+      padding: 15px 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .suggestion-item:hover {
+      background: rgba(138, 43, 226, 0.1);
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-img {
+      width: 45px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-right: 15px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .suggestion-info {
+      flex: 1;
+    }
+
+    .suggestion-name {
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .suggestion-price {
+      color: var(--secondary);
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .products-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .product-card {
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 25px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--glass-border);
+      transition: var(--transition);
+      animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-origin: center;
+      position: relative;
+    }
+
+    @keyframes cardAppear {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .product-card.minimized {
+      max-height: 70px;
+      overflow: hidden;
+    }
+
+    .product-card.minimized .product-content {
+      display: none;
+    }
+
+    .product-card.minimized .product-image {
+      display: none;
+    }
+
+    .product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px;
+      background: rgba(138, 43, 226, 0.1);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .product-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--on-surface);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70%;
+    }
+
+    .minimized .product-title {
+      max-width: 100%;
+    }
+
+    .product-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    .minimized .product-price {
+      font-size: 16px;
+    }
+
+    .product-header-info {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      color: var(--on-surface);
+      cursor: pointer;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .action-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: rotate(15deg);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .product-content {
+      padding: 20px;
+    }
+
+    .product-barcode {
+      background: rgba(0, 210, 255, 0.1);
+      padding: 10px 15px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 16px;
+      display: inline-block;
+      margin-top: 12px;
+      border: 1px solid rgba(0, 210, 255, 0.2);
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 20, 0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      animation: modalFadeIn 0.5s ease;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: var(--surface-solid);
+      width: 90%;
+      max-width: 450px;
+      border-radius: 30px;
+      overflow: hidden;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--glass-border);
+      transform: scale(0.9);
+      animation: modalScaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes modalScaleIn {
+      to { transform: scale(1); }
+    }
+
+    .modal-header {
+      padding: 22px;
+      background: linear-gradient(to right, var(--primary), var(--primary-dark));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .close-modal {
       background: transparent;
       border: none;
       color: white;
-      font-size: 1.5rem;
+      font-size: 22px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      transition: var(--transition);
+      transition: transform 0.3s;
     }
-    
-    .back-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: translateY(-3px);
+
+    .close-modal:hover {
+      transform: rotate(90deg);
     }
-    
-    .admin-card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      animation: fadeIn 0.8s ease-out;
+
+    .modal-body {
+      padding: 25px;
     }
-    
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 25px;
-    }
-    
-    .card-header i {
-      font-size: 2.2rem;
-      color: var(--primary);
-      background: rgba(67, 97, 238, 0.1);
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .card-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--dark);
-    }
-    
-    .card-subtitle {
-      color: #666;
-      margin-top: 5px;
-    }
-    
-    .admin-form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    
+
     .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: var(--on-surface);
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 8px;
     }
-    
-    .form-group label {
-      font-weight: 600;
-      color: var(--dark);
-      font-size: 1.1rem;
-    }
-    
-    .form-group input, .form-group select {
-      padding: 15px 20px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      transition: var(--transition);
-    }
-    
-    .form-group input:focus, .form-group select:focus {
-      border-color: var(--primary);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-    }
-    
-    .suggestion-box {
-      position: absolute;
-      background: white;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 10;
-      display: none;
+
+    .form-input {
       width: 100%;
-      margin-top: 5px;
-    }
-    
-    .suggestion-item {
-      padding: 12px 20px;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    
-    .suggestion-item:hover {
-      background: #f0f4ff;
-    }
-    
-    .camera-section {
-      background: #f8f9fa;
+      padding: 16px 22px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
       border-radius: 15px;
-      padding: 20px;
+      font-size: 15px;
+      color: var(--on-surface);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
       margin-top: 15px;
     }
-    
-    #camera-preview {
-      width: 100%;
-      height: 300px;
-      border-radius: 10px;
-      background: #000;
-      margin-bottom: 15px;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    #camera-view {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-    
-    .camera-controls {
-      display: flex;
-      gap: 15px;
-    }
-    
-    .camera-btn {
-      flex: 1;
-      padding: 15px;
-      border-radius: 12px;
-      border: none;
+
+    .btn {
+      padding: 14px 30px;
+      border-radius: 50px;
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 15px;
       cursor: pointer;
       transition: var(--transition);
+      border: none;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      gap: 8px;
     }
-    
-    .capture-btn {
+
+    .btn-primary {
       background: var(--primary);
       color: white;
     }
-    
-    .capture-btn:hover {
-      background: var(--secondary);
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
       transform: translateY(-3px);
     }
-    
-    .admin-controls {
-      display: flex;
-      gap: 15px;
-      margin-top: 20px;
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--on-surface);
+      border: 1px solid var(--glass-border);
     }
-    
-    .admin-btn {
-      flex: 1;
-      padding: 18px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    
-    .save-btn {
-      background: var(--success);
-      color: white;
-    }
-    
-    .save-btn:hover {
-      background: #3aabd0;
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
       transform: translateY(-3px);
     }
-    
-    .update-btn {
-      background: #ff9e00;
-      color: white;
-    }
-    
-    .update-btn:hover {
-      background: #e08e00;
-      transform: translateY(-3px);
-    }
-    
+
+    /* Toast notifications */
     .toast {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
-      padding: 20px 25px;
-      border-radius: 12px;
-      background: var(--dark);
+      bottom: 25px;
+      right: 25px;
+      padding: 18px 25px;
+      border-radius: 15px;
       color: white;
-      font-weight: 600;
-      box-shadow: var(--shadow);
+      font-weight: 500;
+      z-index: 2000;
       display: flex;
       align-items: center;
-      gap: 15px;
-      z-index: 1000;
-      transform: translateY(100px);
+      gap: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
       opacity: 0;
-      transition: var(--transition);
+      transform: translateY(100px);
+      transition: transform 0.4s, opacity 0.4s;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 90%;
     }
-    
+
     .toast.show {
-      transform: translateY(0);
       opacity: 1;
+      transform: translateY(0);
     }
-    
-    .toast i {
-      font-size: 1.8rem;
-    }
-    
+
     .toast.success {
-      background: var(--success);
+      background: rgba(0, 230, 118, 0.2);
+      border-left: 5px solid var(--success);
     }
-    
+
     .toast.error {
-      background: var(--danger);
+      background: rgba(255, 64, 129, 0.2);
+      border-left: 5px solid var(--error);
+    }
+
+    .toast.warning {
+      background: rgba(255, 214, 0, 0.2);
+      border-left: 5px solid var(--warning);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .admin-btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .suggestion-item {
+        padding: 12px 15px;
+      }
+      
+      .product-header {
+        padding: 15px;
+      }
     }
     
-    @keyframes slideDown {
-      from { transform: translateY(-50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    @media (max-width: 480px) {
+      .container {
+        padding: 5px;
+      }
+      
+      header {
+        padding: 12px;
+        margin-bottom: 15px;
+      }
+      
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+      
+      .logo-text {
+        font-size: 20px;
+      }
+      
+      .search-box {
+        padding: 5px 15px;
+      }
+      
+      #search {
+        padding: 14px 5px;
+        font-size: 15px;
+        height: 45px;
+      }
+      
+      .product-title {
+        font-size: 18px;
+      }
+      
+      .product-price {
+        font-size: 16px;
+      }
     }
     
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Arabic support for product names */
+    .arabic-text {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
   </style>
 </head>
 <body>
+  <!-- Animated background particles -->
+  <div class="particles" id="particles"></div>
+  
   <div class="container">
     <header>
-      <a href="index.html" class="back-btn">
-        <i class="fas fa-arrow-left"></i>
-      </a>
       <div class="logo">
-        <i class="fas fa-user-cog"></i>
-        <h1>Admin Dashboard</h1>
+        <div class="logo-icon">
+          <i class="fas fa-qrcode"></i>
+        </div>
+        <h1 class="logo-text">NexusScan</h1>
       </div>
-      <div style="width: 45px;"></div>
+      <button class="admin-btn" id="admin-btn">
+        <i class="fas fa-lock"></i> Admin Login
+      </button>
     </header>
     
-    <div class="admin-card">
-      <div class="card-header">
-        <i class="fas fa-plus-circle"></i>
-        <div>
-          <h2 class="card-title">Ajouter un Produit</h2>
-          <p class="card-subtitle">Entrez les détails du nouveau produit</p>
-        </div>
+    <div class="search-container">
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="search" placeholder="Search products by name or barcode..." dir="auto">
       </div>
-      
-      <div class="admin-form">
-        <div class="form-group">
-          <label for="product-name">Nom du Produit</label>
-          <input type="text" id="product-name" placeholder="Entrez le nom du produit">
-        </div>
-        
-        <div class="form-group">
-          <label for="product-price">Prix (TND)</label>
-          <input type="number" id="product-price" placeholder="Prix en dinar tunisien" step="0.001" min="0">
-        </div>
-        
-        <div class="form-group">
-          <label for="barcode">Code-barres (Optionnel)</label>
-          <input type="text" id="barcode" placeholder="Entrez le code-barres">
-        </div>
-        
-        <div class="camera-section">
-          <div class="card-subtitle" style="margin-bottom: 15px;">Prendre une photo du produit</div>
-          
-          <div class="camera-settings">
-            <div class="settings-grid">
-              <div class="form-group">
-                <label for="admin-resolution">Résolution</label>
-                <select id="admin-resolution">
-                  <option value="480p">480p (SD)</option>
-                  <option value="720p" selected>720p (HD)</option>
-                  <option value="1080p">1080p (Full HD)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="admin-fps">Images par Seconde</label>
-                <select id="admin-fps">
-                  <option value="15">15 IPS</option>
-                  <option value="30" selected>30 IPS</option>
-                  <option value="60">60 IPS</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <div id="camera-preview">
-            <video id="camera-view" playsinline autoplay></video>
-          </div>
-          
-          <div class="camera-controls">
-            <button class="camera-btn capture-btn" id="start-camera">
-              <i class="fas fa-camera"></i> Démarrer la Caméra
-            </button>
-            <button class="camera-btn capture-btn" id="capture-photo">
-              <i class="fas fa-camera-retro"></i> Prendre une Photo
-            </button>
-          </div>
-        </div>
-        
-        <div class="admin-controls">
-          <button class="admin-btn save-btn" id="save-product">
-            <i class="fas fa-save"></i> Enregistrer le Produit
-          </button>
-        </div>
+      <div class="suggestions" id="suggestions">
+        <!-- Suggestions will be populated here -->
       </div>
     </div>
     
-    <div class="admin-card">
-      <div class="card-header">
-        <i class="fas fa-edit"></i>
-        <div>
-          <h2 class="card-title">Mettre à Jour un Produit</h2>
-          <p class="card-subtitle">Modifier le prix ou l'image d'un produit existant</p>
-        </div>
+    <div class="products-container" id="products-container">
+      <!-- Product cards will be added here -->
+    </div>
+  </div>
+  
+  <!-- Login Modal -->
+  <div class="modal" id="login-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Admin Login</h2>
+        <button class="close-modal" id="close-login">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      
-      <div class="admin-form">
+      <div class="modal-body">
         <div class="form-group">
-          <label for="search-product">Nom du Produit</label>
-          <input type="text" id="search-product" placeholder="Entrez le nom du produit">
-          <div class="suggestion-box" id="product-suggestions"></div>
+          <label for="login-email"><i class="fas fa-envelope"></i> Email</label>
+          <input type="email" id="login-email" class="form-input" placeholder="admin@example.com">
         </div>
-        
         <div class="form-group">
-          <label for="new-price">Nouveau Prix (TND)</label>
-          <input type="number" id="new-price" placeholder="Nouveau prix en dinar tunisien" step="0.001" min="0">
+          <label for="login-password"><i class="fas fa-key"></i> Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="Enter your password">
         </div>
-        
-        <div class="admin-controls">
-          <button class="admin-btn update-btn" id="update-product">
-            <i class="fas fa-sync-alt"></i> Mettre à Jour
+        <div class="form-actions">
+          <button class="btn btn-secondary" id="cancel-login">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button class="btn btn-primary" id="confirm-login">
+            <i class="fas fa-sign-in-alt"></i> Login
           </button>
         </div>
       </div>
     </div>
   </div>
   
-  <div class="toast" id="toast">
-    <i class="fas fa-check-circle"></i>
-    <div class="toast-message">Produit enregistré avec succès!</div>
-  </div>
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
   
   <script>
     // Firebase configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyBqCz2sIx2yQrLJb2m1x8XoK9Y4j7tZ0Xw",
-      authDomain: "scan-prod1.firebaseapp.com",
-      databaseURL: "https://scan-prod1-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "scan-prod1",
-      storageBucket: "scan-prod1.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:abcdef1234567890"
+      apiKey: "AIzaSyCL9MoGTY4elBrv0nH5t4tKNwbDc3uWUik",
+      authDomain: "scan-ftw.firebaseapp.com",
+      databaseURL: "https://scan-ftw-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "scan-ftw",
+      storageBucket: "scan-ftw.firebasestorage.app",
+      messagingSenderId: "468232549663",
+      appId: "1:468232549663:web:793580be90379902f8ac2a"
     };
-    
+
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    
+    const auth = firebase.auth();
+
     // DOM elements
-    const productNameInput = document.getElementById('product-name');
-    const productPriceInput = document.getElementById('product-price');
-    const barcodeInput = document.getElementById('barcode');
-    const saveProductBtn = document.getElementById('save-product');
-    const searchProductInput = document.getElementById('search-product');
-    const newPriceInput = document.getElementById('new-price');
-    const updateProductBtn = document.getElementById('update-product');
-    const startCameraBtn = document.getElementById('start-camera');
-    const capturePhotoBtn = document.getElementById('capture-photo');
-    const cameraView = document.getElementById('camera-view');
-    const adminResolution = document.getElementById('admin-resolution');
-    const adminFps = document.getElementById('admin-fps');
+    const searchInput = document.getElementById('search');
+    const suggestionsContainer = document.getElementById('suggestions');
+    const productsContainer = document.getElementById('products-container');
+    const adminBtn = document.getElementById('admin-btn');
+    const loginModal = document.getElementById('login-modal');
+    const closeLogin = document.getElementById('close-login');
+    const cancelLogin = document.getElementById('cancel-login');
+    const confirmLogin = document.getElementById('confirm-login');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
     const toast = document.getElementById('toast');
-    const productSuggestions = document.getElementById('product-suggestions');
-    
+    const particlesContainer = document.getElementById('particles');
+
     // Variables
-    let cameraStream = null;
-    let productsCache = {};
-    let selectedProduct = null;
-    
-    // Resolution mapping
-    const resolutions = {
-      '480p': { width: 640, height: 480 },
-      '720p': { width: 1280, height: 720 },
-      '1080p': { width: 1920, height: 1080 }
-    };
-    
-    // Start admin camera
-    async function startAdminCamera() {
-      try {
-        // Get selected settings
-        const resolution = adminResolution.value;
-        const fps = parseInt(adminFps.value);
-        const res = resolutions[resolution];
+    let products = [];
+    let displayedProducts = [];
+    let productRef;
+
+    // Create animated particles
+    function createParticles() {
+      const particleCount = 25;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
         
-        // Get camera access
-        cameraStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: "environment",
-            width: { ideal: res.width },
-            height: { ideal: res.height },
-            frameRate: { ideal: fps, max: fps }
-          } 
+        // Random properties
+        const size = Math.random() * 15 + 5;
+        const posX = Math.random() * 100;
+        const posY = Math.random() * 100;
+        const delay = Math.random() * 10;
+        const duration = 10 + Math.random() * 20;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.top = `${posY}%`;
+        particle.style.animationDelay = `${delay}s`;
+        particle.style.animationDuration = `${duration}s`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', handleSearch);
+    adminBtn.addEventListener('click', showLoginModal);
+    closeLogin.addEventListener('click', hideLoginModal);
+    cancelLogin.addEventListener('click', hideLoginModal);
+    confirmLogin.addEventListener('click', handleLogin);
+
+    // Initialize
+    createParticles();
+    initFirebase();
+
+    // Functions
+    function initFirebase() {
+      // Set up database listener
+      productRef = database.ref('products');
+      productRef.on('value', snapshot => {
+        products = [];
+        snapshot.forEach(childSnapshot => {
+          products.push({
+            id: childSnapshot.key,
+            ...childSnapshot.val()
+          });
         });
         
-        cameraView.srcObject = cameraStream;
-        showToast(`Caméra démarrée (${resolution} @ ${fps} IPS)`, 'success');
-        
-      } catch (error) {
-        console.error('Erreur de caméra:', error);
-        showToast('Erreur d\'accès à la caméra', 'error');
+        // Show sample products on first load
+        if (products.length === 0) {
+          loadSampleProducts();
+        }
+      });
+    }
+
+    function loadSampleProducts() {
+      // Add sample products if none exist
+      const sampleProducts = [
+        { name: "Premium Coffee", price: 15.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ECoffee%3C/text%3E%3C/svg%3E", barcode: "123456789" },
+        { name: "Organic Honey", price: 25.490, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EHoney%3C/text%3E%3C/svg%3E", barcode: "234567890" },
+        { name: "Water Bottle", price: 8.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%2300d2ff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EBottle%3C/text%3E%3C/svg%3E", barcode: "345678901" },
+        { name: "قهوة تركية", price: 18.500, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻖﻫﻮﺓ%3C/text%3E%3C/svg%3E", barcode: "456789012" },
+        { name: "عسل طبيعي", price: 32.750, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻊﺳﻞ%3C/text%3E%3C/svg%3E", barcode: "567890123" }
+      ];
+      
+      sampleProducts.forEach(product => {
+        productRef.push(product);
+      });
+    }
+
+    function handleSearch(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      
+      if (searchTerm.length === 0) {
+        suggestionsContainer.style.display = 'none';
+        return;
+      }
+
+      // Prefix search (starts with)
+      const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().startsWith(searchTerm) || 
+        (product.barcode && product.barcode.toLowerCase().startsWith(searchTerm))
+      );
+
+      if (filteredProducts.length > 0) {
+        renderSuggestions(filteredProducts);
+        suggestionsContainer.style.display = 'block';
+      } else {
+        suggestionsContainer.style.display = 'none';
       }
     }
-    
-    // Capture product photo
-    function captureProductPhoto() {
-      if (!cameraStream) {
-        showToast('Veuillez d\'abord démarrer la caméra', 'error');
-        return;
-      }
+
+    function renderSuggestions(products) {
+      suggestionsContainer.innerHTML = '';
       
-      // In a real app, this would capture and convert to base64
-      showToast('Photo capturée avec succès!', 'success');
+      products.forEach(product => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        suggestionItem.innerHTML = `
+          <img src="${product.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Crect fill=\'%238a2be2\' width=\'100\' height=\'100\'/%3E%3C/svg%3E'}" class="suggestion-img" alt="${product.name}">
+          <div class="suggestion-info">
+            <div class="suggestion-name ${product.name.match(/[\u0600-\u06FF]/) ? 'arabic-text' : ''}">${product.name}</div>
+            <div class="suggestion-price">TND ${product.price.toFixed(3)}</div>
+          </div>
+        `;
+        suggestionItem.addEventListener('click', () => selectProduct(product));
+        suggestionsContainer.appendChild(suggestionItem);
+      });
     }
-    
-    // Save new product
-    async function saveProduct() {
-      const name = productNameInput.value.trim();
-      const price = parseFloat(productPriceInput.value);
-      const barcode = barcodeInput.value.trim();
+
+    function selectProduct(product) {
+      // Close suggestions
+      suggestionsContainer.style.display = 'none';
+      searchInput.value = '';
       
-      // Validation
-      if (!name || isNaN(price) || price <= 0) {
-        showToast('Veuillez entrer un nom et un prix valide', 'error');
+      // Check if product is already displayed
+      if (displayedProducts.some(p => p.id === product.id)) {
+        showToast('Product is already displayed', 'warning');
         return;
       }
       
-      try {
-        // Create product object
-        const product = {
-          name,
-          price,
-          barcode: barcode || 'N/A',
-          timestamp: Date.now()
-        };
-        
-        // Save to Firebase
-        const newProductRef = database.ref('products').push();
-        await newProductRef.set(product);
-        
-        // Clear form
-        productNameInput.value = '';
-        productPriceInput.value = '';
-        barcodeInput.value = '';
-        
-        showToast('Produit enregistré avec succès!', 'success');
-        
-      } catch (error) {
-        console.error('Erreur de sauvegarde:', error);
-        showToast('Erreur de sauvegarde du produit', 'error');
-      }
-    }
-    
-    // Update existing product
-    async function updateProduct() {
-      const name = searchProductInput.value.trim();
-      const price = parseFloat(newPriceInput.value);
-      
-      if (!name || isNaN(price) || price <= 0) {
-        showToast('Veuillez entrer un nom et un prix valide', 'error');
-        return;
-      }
-      
-      if (!selectedProduct) {
-        showToast('Veuillez sélectionner un produit', 'error');
-        return;
-      }
-      
-      try {
-        // Update product
-        const updates = {
-          price: price,
-          timestamp: Date.now()
-        };
-        
-        await database.ref(`products/${selectedProduct.id}`).update(updates);
-        
-        // Update cache
-        productsCache[selectedProduct.id].price = price;
-        
-        // Clear form
-        searchProductInput.value = '';
-        newPriceInput.value = '';
-        selectedProduct = null;
-        
-        showToast('Prix mis à jour avec succès!', 'success');
-        
-      } catch (error) {
-        console.error('Erreur de mise à jour:', error);
-        showToast('Erreur de mise à jour du produit', 'error');
-      }
-    }
-    
-    // Show product suggestions for admin
-    function showProductSuggestions() {
-      const query = searchProductInput.value.trim().toLowerCase();
-      productSuggestions.innerHTML = '';
-      
-      if (query.length === 0) {
-        productSuggestions.style.display = 'none';
-        return;
-      }
-      
-      const suggestions = [];
-      
-      // Get matching products
-      for (const id in productsCache) {
-        const product = productsCache[id];
-        const productName = product.name.toLowerCase();
-        
-        if (productName.includes(query)) {
-          suggestions.push({id, name: product.name});
+      // Limit to 2 products displayed at once
+      if (displayedProducts.length >= 2) {
+        // Animate out the oldest product
+        const oldestProduct = document.querySelector(`.product-card[data-id="${displayedProducts[0].id}"]`);
+        if (oldestProduct) {
+          oldestProduct.style.animation = 'cardDisappear 0.5s forwards';
+          setTimeout(() => {
+            displayedProducts.shift(); // Remove the oldest product
+            renderProducts();
+          }, 500);
         }
       }
       
-      if (suggestions.length === 0) {
-        productSuggestions.style.display = 'none';
+      displayedProducts.push(product);
+      renderProducts();
+    }
+
+    function renderProducts() {
+      productsContainer.innerHTML = '';
+      
+      displayedProducts.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.setAttribute('data-id', product.id);
+        productCard.innerHTML = `
+          <div class="product-header">
+            <div class="product-header-info">
+              <div class="product-title ${product.name.match(/[\u0600-\u06FF]/) ? 'arabic-text' : ''}">${product.name}</div>
+              <div class="product-price">TND ${product.price.toFixed(3)}</div>
+            </div>
+            <div class="product-actions">
+              <button class="action-btn minimize-btn" data-id="${product.id}">
+                <i class="fas fa-window-minimize"></i>
+              </button>
+              <button class="action-btn close-btn" data-id="${product.id}">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : ''}
+          <div class="product-content">
+            ${product.barcode ? `<div class="product-barcode">${product.barcode}</div>` : ''}
+          </div>
+        `;
+        
+        productsContainer.appendChild(productCard);
+      });
+
+      // Add event listeners to new buttons
+      document.querySelectorAll('.minimize-btn').forEach(btn => {
+        btn.addEventListener('click', minimizeProduct);
+      });
+      
+      document.querySelectorAll('.close-btn').forEach(btn => {
+        btn.addEventListener('click', removeProduct);
+      });
+    }
+
+    function minimizeProduct(e) {
+      const productId = e.target.closest('.action-btn').getAttribute('data-id');
+      const productCard = document.querySelector(`.product-card[data-id="${productId}"]`);
+      
+      if (productCard) {
+        productCard.classList.toggle('minimized');
+        showToast('Product minimized', 'success');
+      }
+    }
+
+    function removeProduct(e) {
+      const productId = e.target.closest('.action-btn').getAttribute('data-id');
+      const productCard = document.querySelector(`.product-card[data-id="${productId}"]`);
+      
+      if (productCard) {
+        productCard.style.animation = 'cardDisappear 0.5s forwards';
+        setTimeout(() => {
+          displayedProducts = displayedProducts.filter(p => p.id !== productId);
+          renderProducts();
+        }, 500);
+      }
+    }
+
+    function showLoginModal() {
+      loginModal.style.display = 'flex';
+    }
+
+    function hideLoginModal() {
+      loginModal.style.display = 'none';
+      loginEmail.value = '';
+      loginPassword.value = '';
+    }
+
+    function handleLogin() {
+      const email = loginEmail.value;
+      const password = loginPassword.value;
+      
+      if (!email || !password) {
+        showToast('Please enter both email and password', 'error');
         return;
       }
       
-      // Display suggestions
-      suggestions.slice(0, 5).forEach(item => {
-        const suggestionItem = document.createElement('div');
-        suggestionItem.className = 'suggestion-item';
-        suggestionItem.textContent = item.name;
-        
-        suggestionItem.addEventListener('click', () => {
-          searchProductInput.value = item.name;
-          newPriceInput.value = productsCache[item.id].price.toFixed(3);
-          selectedProduct = {id: item.id, ...productsCache[item.id]};
-          productSuggestions.style.display = 'none';
+      auth.signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          // Redirect to admin.html after successful login
+          window.location.href = 'admin.html';
+        })
+        .catch(error => {
+          showToast(error.message, 'error');
         });
-        
-        productSuggestions.appendChild(suggestionItem);
-      });
-      
-      productSuggestions.style.display = 'block';
     }
-    
-    // Show toast notification
-    function showToast(message, type = 'success') {
-      const toastIcon = toast.querySelector('i');
-      const toastMessage = toast.querySelector('.toast-message');
+
+    function showToast(message, type) {
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
       
-      // Update toast content
-      toastMessage.textContent = message;
-      toast.className = `toast ${type}`;
-      
-      // Set icon based on type
-      toastIcon.className = type === 'success' ? 
-        'fas fa-check-circle' : 'fas fa-exclamation-circle';
-      
-      // Show toast
-      toast.classList.add('show');
-      
-      // Hide after 3 seconds
       setTimeout(() => {
         toast.classList.remove('show');
       }, 3000);
     }
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
     
-    // Load products from Firebase
-    function loadProducts() {
-      database.ref('products').on('value', (snapshot) => {
-        productsCache = snapshot.val() || {};
-      });
-    }
-    
-    // Initialize the admin app
-    function initAdminApp() {
-      // Load products
-      loadProducts();
-      
-      // Set up event listeners
-      startCameraBtn.addEventListener('click', startAdminCamera);
-      capturePhotoBtn.addEventListener('click', captureProductPhoto);
-      saveProductBtn.addEventListener('click', saveProduct);
-      updateProductBtn.addEventListener('click', updateProduct);
-      searchProductInput.addEventListener('input', showProductSuggestions);
-      
-      // Close suggestions when clicking away
-      document.addEventListener('click', (e) => {
-        if (!productSuggestions.contains(e.target) && e.target !== searchProductInput) {
-          productSuggestions.style.display = 'none';
-        }
-      });
-    }
-    
-    // Start the admin app when page loads
-    window.addEventListener('DOMContentLoaded', initAdminApp);
+    // Add custom animation for card disappear
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes cardDisappear {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(0.5); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>
