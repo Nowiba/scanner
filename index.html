@@ -674,6 +674,17 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       direction: rtl;
     }
+    
+    /* Mobile-specific fixes */
+    @media (hover: none) {
+      .suggestion-item:hover {
+        background: inherit;
+      }
+      
+      .suggestion-item:active {
+        background: rgba(138, 43, 226, 0.1);
+      }
+    }
   </style>
 </head>
 <body>
@@ -727,22 +738,25 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label for="login-email"><i class="fas fa-envelope"></i> Email</label>
-          <input type="email" id="login-email" class="form-input" placeholder="admin@example.com">
-        </div>
-        <div class="form-group">
-          <label for="login-password"><i class="fas fa-key"></i> Password</label>
-          <input type="password" id="login-password" class="form-input" placeholder="Enter your password">
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-secondary" id="cancel-login">
-            <i class="fas fa-times"></i> Cancel
-          </button>
-          <button class="btn btn-primary" id="confirm-login">
-            <i class="fas fa-sign-in-alt"></i> Login
-          </button>
-        </div>
+        <!-- FIX: Wrap inputs in a form element -->
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email"><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" id="login-email" class="form-input" placeholder="admin@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password"><i class="fas fa-key"></i> Password</label>
+            <input type="password" id="login-password" class="form-input" placeholder="Enter your password" required>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancel-login">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" id="confirm-login">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -780,6 +794,7 @@
     const loginEmail = document.getElementById('login-email');
     const loginPassword = document.getElementById('login-password');
     const toast = document.getElementById('toast');
+    const loginForm = document.getElementById('login-form');
 
     // Variables
     let products = [];
@@ -794,7 +809,7 @@
     adminBtn.addEventListener('click', showLoginModal);
     closeLogin.addEventListener('click', hideLoginModal);
     cancelLogin.addEventListener('click', hideLoginModal);
-    confirmLogin.addEventListener('click', handleLogin);
+    loginForm.addEventListener('submit', handleLogin); // Attach to form submit
     
     // Disable copy/paste
     document.addEventListener('copy', preventCopyPaste);
@@ -847,6 +862,9 @@
         if (products.length === 0) {
           loadSampleProducts();
         }
+      }, error => {
+        console.error('Firebase read failed:', error);
+        showToast('Failed to load products. Check your connection.', 'error');
       });
     }
 
@@ -905,6 +923,11 @@
             <div class="suggestion-price">${formatPrice(product.price)}</div>
           </div>
         `;
+        // Use touch events for mobile compatibility
+        suggestionItem.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          selectProduct(product);
+        });
         suggestionItem.addEventListener('click', () => selectProduct(product));
         suggestionsContainer.appendChild(suggestionItem);
       });
@@ -953,7 +976,9 @@
         
         // Add event listeners to buttons
         document.querySelector('.minimize-btn').addEventListener('click', minimizeProduct);
+        document.querySelector('.minimize-btn').addEventListener('touchend', minimizeProduct);
         document.querySelector('.close-btn').addEventListener('click', removeProduct);
+        document.querySelector('.close-btn').addEventListener('touchend', removeProduct);
       } else {
         // Show placeholder
         productsContainer.innerHTML = `
@@ -1003,7 +1028,9 @@
       loginPassword.value = '';
     }
 
-    function handleLogin() {
+    function handleLogin(e) {
+      e.preventDefault(); // Prevent form submission
+      
       const email = loginEmail.value;
       const password = loginPassword.value;
       
@@ -1033,6 +1060,13 @@
 
     // Close suggestions when clicking outside
     document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+    
+    // Add touch event to close suggestions on mobile
+    document.addEventListener('touchend', (e) => {
       if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
         suggestionsContainer.style.display = 'none';
       }
