@@ -151,28 +151,6 @@
       transform: rotate(15deg);
     }
 
-    .offline-btn {
-      position: relative;
-    }
-
-    .offline-btn.active {
-      background: var(--success);
-      color: white;
-      box-shadow: 0 0 15px rgba(0, 230, 118, 0.5);
-    }
-
-    .offline-btn.active::after {
-      content: '';
-      position: absolute;
-      top: -3px;
-      right: -3px;
-      width: 10px;
-      height: 10px;
-      background: var(--success);
-      border-radius: 50%;
-      border: 2px solid var(--surface);
-    }
-
     .search-container {
       position: relative;
       margin-bottom: 25px;
@@ -626,31 +604,6 @@
       color: var(--on-surface);
     }
 
-    /* Offline indicator */
-    .offline-indicator {
-      position: fixed;
-      bottom: 70px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 8px 20px;
-      background: rgba(255, 64, 129, 0.2);
-      border-left: 3px solid var(--error);
-      border-radius: 10px;
-      color: white;
-      font-weight: 500;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      backdrop-filter: blur(10px);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .offline-indicator.show {
-      opacity: 1;
-    }
-
     /* Responsive Design */
     @media (max-width: 768px) {
       header {
@@ -733,12 +686,6 @@
         <h1 class="logo-text">NexusScan</h1>
       </div>
       <div class="header-buttons">
-        <button class="action-btn offline-btn" id="offline-btn" title="Download for offline use">
-          <i class="fas fa-download"></i>
-        </button>
-        <button class="action-btn" id="settings-btn" title="Settings">
-          <i class="fas fa-cog"></i>
-        </button>
         <button class="action-btn" id="admin-btn" title="Admin Login">
           <i class="fas fa-lock"></i>
         </button>
@@ -803,11 +750,6 @@
   <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
   
-  <!-- Offline Indicator -->
-  <div class="offline-indicator" id="offline-indicator">
-    <i class="fas fa-wifi"></i> You are currently offline
-  </div>
-  
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -831,8 +773,6 @@
     const suggestionsContainer = document.getElementById('suggestions');
     const productsContainer = document.getElementById('products-container');
     const adminBtn = document.getElementById('admin-btn');
-    const offlineBtn = document.getElementById('offline-btn');
-    const settingsBtn = document.getElementById('settings-btn');
     const loginModal = document.getElementById('login-modal');
     const closeLogin = document.getElementById('close-login');
     const cancelLogin = document.getElementById('cancel-login');
@@ -840,14 +780,11 @@
     const loginEmail = document.getElementById('login-email');
     const loginPassword = document.getElementById('login-password');
     const toast = document.getElementById('toast');
-    const offlineIndicator = document.getElementById('offline-indicator');
 
     // Variables
     let products = [];
     let displayedProduct = null;
     let productRef;
-    let isOfflineMode = false;
-    let offlineProducts = [];
 
     // Event listeners
     searchInput.addEventListener('input', handleSearch);
@@ -855,8 +792,6 @@
     searchInput.addEventListener('focus', showCharCounter);
     searchInput.addEventListener('blur', hideCharCounter);
     adminBtn.addEventListener('click', showLoginModal);
-    offlineBtn.addEventListener('click', toggleOfflineMode);
-    settingsBtn.addEventListener('click', showSettingsConfirmation);
     closeLogin.addEventListener('click', hideLoginModal);
     cancelLogin.addEventListener('click', hideLoginModal);
     confirmLogin.addEventListener('click', handleLogin);
@@ -868,9 +803,6 @@
 
     // Initialize
     initFirebase();
-    checkOnlineStatus();
-    window.addEventListener('online', checkOnlineStatus);
-    window.addEventListener('offline', checkOnlineStatus);
 
     // Functions
     function preventCopyPaste(e) {
@@ -945,12 +877,9 @@
         suggestionsContainer.style.display = 'none';
         return;
       }
-
-      // Get products from appropriate source
-      const searchProducts = isOfflineMode ? offlineProducts : products;
       
-      // Prefix search (starts with)
-      const filteredProducts = searchProducts.filter(product => 
+      // Always use online products
+      const filteredProducts = products.filter(product => 
         product.name.toLowerCase().startsWith(searchTerm) || 
         (product.barcode && product.barcode.toLowerCase().startsWith(searchTerm))
       );
@@ -1064,70 +993,6 @@
       }
     }
 
-    function toggleOfflineMode() {
-      if (isOfflineMode) {
-        // Disable offline mode
-        offlineBtn.classList.remove('active');
-        isOfflineMode = false;
-        showToast('Online mode activated', 'success');
-      } else {
-        // Enable offline mode - download data only when button is clicked
-        if (products.length > 0) {
-          localStorage.setItem('nexusScanProducts', JSON.stringify(products));
-          offlineProducts = [...products];
-          offlineBtn.classList.add('active');
-          isOfflineMode = true;
-          showToast('Offline mode activated - data downloaded', 'success');
-        } else {
-          showToast('No data available to download', 'error');
-        }
-      }
-    }
-
-    function showSettingsConfirmation() {
-      toast.innerHTML = `
-        <div class="toast-message">
-          <i class="fas fa-exclamation-circle"></i> Are you sure you want to delete all offline data?
-        </div>
-        <div class="toast-actions">
-          <button class="toast-btn toast-cancel" id="toast-cancel">Cancel</button>
-          <button class="toast-btn toast-confirm" id="toast-confirm">Delete</button>
-        </div>
-      `;
-      toast.className = 'toast confirm show';
-      
-      document.getElementById('toast-confirm').addEventListener('click', deleteAllData);
-      document.getElementById('toast-cancel').addEventListener('click', () => {
-        toast.classList.remove('show');
-      });
-    }
-
-    function deleteAllData() {
-      localStorage.removeItem('nexusScanProducts');
-      offlineProducts = [];
-      isOfflineMode = false;
-      offlineBtn.classList.remove('active');
-      displayedProduct = null;
-      renderProducts();
-      toast.classList.remove('show');
-      showToast('All offline data has been deleted', 'success');
-    }
-
-    function checkOnlineStatus() {
-      if (navigator.onLine) {
-        offlineIndicator.classList.remove('show');
-      } else {
-        offlineIndicator.classList.add('show');
-        // Automatically switch to offline mode when connection is lost
-        const storedProducts = localStorage.getItem('nexusScanProducts');
-        if (storedProducts) {
-          offlineProducts = JSON.parse(storedProducts);
-          isOfflineMode = true;
-          offlineBtn.classList.add('active');
-        }
-      }
-    }
-
     function showLoginModal() {
       loginModal.style.display = 'flex';
     }
@@ -1225,16 +1090,6 @@
       }
     `;
     document.head.appendChild(style);
-    
-    // Load products from localStorage on initial load if offline mode is active
-    window.addEventListener('DOMContentLoaded', () => {
-      const storedProducts = localStorage.getItem('nexusScanProducts');
-      if (storedProducts) {
-        offlineProducts = JSON.parse(storedProducts);
-        isOfflineMode = true;
-        offlineBtn.classList.add('active');
-      }
-    });
   </script>
 </body>
 </html>
