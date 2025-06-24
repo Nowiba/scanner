@@ -255,8 +255,25 @@
       transition: var(--transition);
       outline: none;
     }
+    
+    .form-select {
+      width: 100%;
+      padding: 16px 22px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      font-size: 15px;
+      color: var(--on-surface);
+      transition: var(--transition);
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23A45CFF'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+      background-size: 16px;
+    }
 
-    .form-input:focus {
+    .form-input:focus, .form-select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
     }
@@ -412,6 +429,16 @@
       display: flex;
       gap: 15px;
       color: var(--secondary);
+      flex-wrap: wrap;
+    }
+
+    .product-category {
+      background: rgba(0, 210, 255, 0.1);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      display: inline-block;
+      border: 1px solid rgba(0, 210, 255, 0.2);
     }
 
     .product-actions {
@@ -484,11 +511,6 @@
       border-left: 5px solid var(--error);
     }
 
-    .toast.warning {
-      background: rgba(255, 214, 0, 0.2);
-      border-left: 5px solid var(--warning);
-    }
-
     /* Responsive Design */
     @media (max-width: 768px) {
       header {
@@ -500,6 +522,16 @@
       .logout-btn {
         width: 100%;
         justify-content: center;
+      }
+      
+      .product-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .product-actions {
+        margin-top: 15px;
+        align-self: flex-end;
       }
     }
     
@@ -527,6 +559,11 @@
     /* Arabic support for product names */
     .arabic-text {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* Performance optimizations */
+    .product-item, .image-preview {
+      will-change: transform;
     }
   </style>
 </head>
@@ -570,6 +607,17 @@
               </div>
             </div>
             
+            <!-- Category selection -->
+            <div class="form-group">
+              <label for="product-category"><i class="fas fa-list"></i> Product Category</label>
+              <select id="product-category" class="form-select" required>
+                <option value="">Select a category</option>
+                <option value="food">مواد غذائية</option>
+                <option value="cleaning">مواد تنظيف</option>
+                <option value="hakakat">حكاكات</option>
+              </select>
+            </div>
+            
             <div class="form-group">
               <label for="product-image"><i class="fas fa-image"></i> Product Image</label>
               <div class="image-upload" id="image-upload">
@@ -582,7 +630,7 @@
             </div>
             
             <div class="form-actions">
-              <button type="reset" class="btn btn-secondary">
+              <button type="reset" class="btn btn-secondary" id="reset-btn">
                 <i class="fas fa-times"></i> Clear
               </button>
               <button type="submit" class="btn btn-primary">
@@ -636,6 +684,7 @@
     const productName = document.getElementById('product-name');
     const productPrice = document.getElementById('product-price');
     const productBarcode = document.getElementById('product-barcode');
+    const productCategory = document.getElementById('product-category');
     const productImage = document.getElementById('product-image');
     const imageUpload = document.getElementById('image-upload');
     const imagePreview = document.getElementById('image-preview');
@@ -643,19 +692,23 @@
     const productsList = document.getElementById('products-list');
     const toast = document.getElementById('toast');
     const particlesContainer = document.getElementById('particles');
+    const resetBtn = document.getElementById('reset-btn');
 
     // Variables
     let products = [];
     let currentEditId = null;
     let productRef;
     let imageFile = null;
+    let searchTimeout = null;
+    let particleAnimationFrame = null;
 
     // Event listeners
     logoutBtn.addEventListener('click', handleLogout);
     productForm.addEventListener('submit', handleProductSubmit);
     imageUpload.addEventListener('click', () => productImage.click());
     productImage.addEventListener('change', handleImageUpload);
-    productSearch.addEventListener('input', filterProducts);
+    productSearch.addEventListener('input', handleProductSearch);
+    resetBtn.addEventListener('click', resetForm);
 
     // Initialize
     checkAuthState();
@@ -664,18 +717,18 @@
 
     // Functions
     function createParticles() {
-      const particleCount = 20;
+      const particleCount = 15; // Reduced for performance
       
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.classList.add('particle');
         
         // Random properties
-        const size = Math.random() * 15 + 5;
+        const size = Math.random() * 10 + 5; // Smaller particles
         const posX = Math.random() * 100;
         const posY = Math.random() * 100;
         const delay = Math.random() * 10;
-        const duration = 10 + Math.random() * 20;
+        const duration = 15 + Math.random() * 15; // Slower animation
         
         particle.style.width = `${size}px`;
         particle.style.height = `${size}px`;
@@ -686,6 +739,24 @@
         
         particlesContainer.appendChild(particle);
       }
+      
+      // Optimize animations
+      optimizeAnimations();
+    }
+    
+    function optimizeAnimations() {
+      // Reduce animation intensity
+      const particles = document.querySelectorAll('.particle');
+      particles.forEach(particle => {
+        particle.style.willChange = 'transform';
+      });
+      
+      // Use requestAnimationFrame for smoother animations
+      function animateParticles() {
+        particleAnimationFrame = requestAnimationFrame(animateParticles);
+      }
+      
+      animateParticles();
     }
 
     function checkAuthState() {
@@ -726,16 +797,18 @@
       const name = productName.value.trim();
       const price = parseFloat(productPrice.value);
       const barcode = productBarcode.value.trim();
+      const category = productCategory.value;
       
-      if (!name || isNaN(price)) {
-        showToast('Name and price are required', 'error');
+      if (!name || isNaN(price) || !category) {
+        showToast('Name, price, and category are required', 'error');
         return;
       }
       
       const productData = {
         name,
         price,
-        barcode: barcode || null
+        barcode: barcode || null,
+        category
       };
       
       // Handle image compression and upload
@@ -805,7 +878,7 @@
           });
       } else {
         // Check if product with this name already exists
-        const existingProduct = products.find(p => p.name.toLowerCase() === name.toLowerCase());
+        const existingProduct = products.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
         
         if (existingProduct) {
           // Update existing product
@@ -864,9 +937,21 @@
         return;
       }
       
+      // Create document fragment for efficient rendering
+      const fragment = document.createDocumentFragment();
+      
       productsToRender.forEach(product => {
         const productItem = document.createElement('div');
         productItem.className = 'product-item';
+        
+        let categoryText = '';
+        switch(product.category) {
+          case 'food': categoryText = 'مواد غذائية'; break;
+          case 'cleaning': categoryText = 'مواد تنظيف'; break;
+          case 'hakakat': categoryText = 'حكاكات'; break;
+          default: categoryText = 'Uncategorized';
+        }
+        
         productItem.innerHTML = `
           ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : '<div class="product-image" style="background: rgba(138, 43, 226, 0.1); display: flex; align-items: center; justify-content: center;"><i class="fas fa-image" style="font-size: 24px; color: var(--primary-light);"></i></div>'}
           <div class="product-info">
@@ -874,6 +959,7 @@
             <div class="product-details">
               <div>TND ${product.price.toFixed(3)}</div>
               ${product.barcode ? `<div>Barcode: ${product.barcode}</div>` : ''}
+              <div class="product-category">${categoryText}</div>
             </div>
           </div>
           <div class="product-actions">
@@ -886,8 +972,10 @@
           </div>
         `;
         
-        productsList.appendChild(productItem);
+        fragment.appendChild(productItem);
       });
+      
+      productsList.appendChild(fragment);
       
       // Add event listeners to buttons
       document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -908,6 +996,7 @@
         productName.value = product.name;
         productPrice.value = product.price;
         productBarcode.value = product.barcode || '';
+        productCategory.value = product.category || '';
         
         if (product.image) {
           imagePreview.src = product.image;
@@ -928,38 +1017,39 @@
       const product = products.find(p => p.id === productId);
       
       if (product) {
-        showToast(`Deleting "${product.name}"...`, 'warning');
-        
-        setTimeout(() => {
-          database.ref(`products/${productId}`).remove()
-            .then(() => {
-              showToast('Product deleted successfully', 'success');
-              if (currentEditId === productId) {
-                resetForm();
-              }
-            })
-            .catch(error => {
-              showToast(error.message, 'error');
-            });
-        }, 500);
+        database.ref(`products/${productId}`).remove()
+          .then(() => {
+            showToast('Product deleted successfully', 'success');
+            if (currentEditId === productId) {
+              resetForm();
+            }
+          })
+          .catch(error => {
+            showToast(error.message, 'error');
+          });
       }
     }
 
-    function filterProducts() {
-      const searchTerm = productSearch.value.toLowerCase();
-      
-      if (searchTerm.length === 0) {
-        renderProducts(products);
-        return;
-      }
-      
-      const filteredProducts = products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm) || 
-        (product.barcode && product.barcode.toLowerCase().includes(searchTerm)) ||
-        product.price.toString().includes(searchTerm)
-      );
-      
-      renderProducts(filteredProducts);
+    function handleProductSearch() {
+      // Debounce search to reduce CPU usage
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const searchTerm = productSearch.value.toLowerCase();
+        
+        if (searchTerm.length === 0) {
+          renderProducts(products);
+          return;
+        }
+        
+        const filteredProducts = products.filter(product => 
+          product.name.toLowerCase().includes(searchTerm) || 
+          (product.barcode && product.barcode.toLowerCase().includes(searchTerm)) ||
+          (product.category && product.category.toLowerCase().includes(searchTerm)) ||
+          product.price.toString().includes(searchTerm)
+        );
+        
+        renderProducts(filteredProducts);
+      }, 300);
     }
 
     function resetForm() {
@@ -972,6 +1062,9 @@
     }
 
     function showToast(message, type) {
+      // Skip warning (yellow) toasts as requested
+      if (type === 'warning') return;
+      
       toast.textContent = message;
       toast.className = `toast ${type} show`;
       
@@ -979,6 +1072,13 @@
         toast.classList.remove('show');
       }, 3000);
     }
+    
+    // Clean up on page unload to prevent memory leaks
+    window.addEventListener('beforeunload', () => {
+      if (particleAnimationFrame) {
+        cancelAnimationFrame(particleAnimationFrame);
+      }
+    });
   </script>
 </body>
 </html>
