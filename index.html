@@ -39,11 +39,13 @@
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
       height: 100%;
       overflow-x: hidden;
+      touch-action: manipulation;
     }
 
     body {
@@ -55,7 +57,6 @@
       position: relative;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      touch-action: manipulation;
     }
 
     body::before {
@@ -75,6 +76,7 @@
       max-width: 100%;
       margin: 0 auto;
       padding: 10px;
+      position: relative;
     }
 
     header {
@@ -89,6 +91,8 @@
       box-shadow: var(--shadow);
       border: 1px solid var(--glass-border);
       animation: slideDown 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      z-index: 10;
     }
 
     @keyframes slideDown {
@@ -229,6 +233,8 @@
       border: 1px solid var(--glass-border);
       animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       transform-origin: top;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     @keyframes scaleIn {
@@ -685,6 +691,168 @@
         background: rgba(138, 43, 226, 0.1);
       }
     }
+    
+    /* Category Sidebar */
+    .categories-btn {
+      position: absolute;
+      top: 20px;
+      right: 80px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      color: var(--on-surface);
+      cursor: pointer;
+      transition: var(--transition);
+      z-index: 11;
+    }
+    
+    .categories-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: rotate(15deg);
+    }
+    
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100%;
+      background: var(--surface-solid);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+      z-index: 100;
+      transition: transform 0.4s ease;
+      overflow-y: auto;
+      padding: 20px;
+      border-left: 1px solid var(--glass-border);
+    }
+    
+    .sidebar.open {
+      transform: translateX(-300px);
+    }
+    
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .sidebar-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--on-surface);
+    }
+    
+    .close-sidebar {
+      background: transparent;
+      border: none;
+      color: var(--on-surface);
+      font-size: 22px;
+      cursor: pointer;
+    }
+    
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .category-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background: rgba(138, 43, 226, 0.1);
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid var(--glass-border);
+    }
+    
+    .category-item:hover {
+      background: rgba(138, 43, 226, 0.2);
+    }
+    
+    .category-item.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .category-icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+      font-size: 18px;
+    }
+    
+    .category-name {
+      flex: 1;
+      font-weight: 500;
+    }
+    
+    .category-count {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .category-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .total-products {
+      color: var(--secondary);
+      font-weight: 600;
+    }
+    
+    .back-to-categories {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+      padding: 8px 15px;
+      background: rgba(138, 43, 226, 0.1);
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid var(--glass-border);
+      width: fit-content;
+    }
+    
+    .back-to-categories:hover {
+      background: rgba(138, 43, 226, 0.2);
+    }
+    
+    /* Performance optimizations */
+    .product-card {
+      will-change: transform, opacity;
+    }
+    
+    .suggestions {
+      will-change: transform, opacity;
+    }
   </style>
 </head>
 <body>
@@ -697,6 +865,9 @@
         <h1 class="logo-text">NexusScan</h1>
       </div>
       <div class="header-buttons">
+        <button class="action-btn" id="categories-btn" title="Product Categories">
+          <i class="fas fa-list"></i>
+        </button>
         <button class="action-btn" id="admin-btn" title="Admin Login">
           <i class="fas fa-lock"></i>
         </button>
@@ -728,6 +899,39 @@
     </div>
   </div>
   
+  <!-- Sidebar for Categories -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">Categories</h2>
+      <button class="close-sidebar" id="close-sidebar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="category-list" id="category-list">
+      <div class="category-item" data-category="food">
+        <div class="category-icon">
+          <i class="fas fa-utensils"></i>
+        </div>
+        <div class="category-name">مواد غذائية</div>
+        <div class="category-count" id="food-count">0</div>
+      </div>
+      <div class="category-item" data-category="cleaning">
+        <div class="category-icon">
+          <i class="fas fa-pump-soap"></i>
+        </div>
+        <div class="category-name">مواد تنظيف</div>
+        <div class="category-count" id="cleaning-count">0</div>
+      </div>
+      <div class="category-item" data-category="hakakat">
+        <div class="category-icon">
+          <i class="fas fa-carrot"></i>
+        </div>
+        <div class="category-name">حكاكات</div>
+        <div class="category-count" id="hakakat-count">0</div>
+      </div>
+    </div>
+  </div>
+  
   <!-- Login Modal -->
   <div class="modal" id="login-modal">
     <div class="modal-content">
@@ -738,7 +942,6 @@
         </button>
       </div>
       <div class="modal-body">
-        <!-- FIX: Wrap inputs in a form element -->
         <form id="login-form">
           <div class="form-group">
             <label for="login-email"><i class="fas fa-envelope"></i> Email</label>
@@ -787,6 +990,10 @@
     const suggestionsContainer = document.getElementById('suggestions');
     const productsContainer = document.getElementById('products-container');
     const adminBtn = document.getElementById('admin-btn');
+    const categoriesBtn = document.getElementById('categories-btn');
+    const closeSidebar = document.getElementById('close-sidebar');
+    const sidebar = document.getElementById('sidebar');
+    const categoryList = document.getElementById('category-list');
     const loginModal = document.getElementById('login-modal');
     const closeLogin = document.getElementById('close-login');
     const cancelLogin = document.getElementById('cancel-login');
@@ -795,11 +1002,20 @@
     const loginPassword = document.getElementById('login-password');
     const toast = document.getElementById('toast');
     const loginForm = document.getElementById('login-form');
+    
+    // Category count elements
+    const foodCount = document.getElementById('food-count');
+    const cleaningCount = document.getElementById('cleaning-count');
+    const hakakatCount = document.getElementById('hakakat-count');
 
     // Variables
     let products = [];
     let displayedProduct = null;
+    let currentCategory = null;
     let productRef;
+    let scrollPosition = 0;
+    let isScrolling = false;
+    let searchTimeout = null;
 
     // Event listeners
     searchInput.addEventListener('input', handleSearch);
@@ -807,15 +1023,17 @@
     searchInput.addEventListener('focus', showCharCounter);
     searchInput.addEventListener('blur', hideCharCounter);
     adminBtn.addEventListener('click', showLoginModal);
+    categoriesBtn.addEventListener('click', toggleSidebar);
+    closeSidebar.addEventListener('click', closeSidebarHandler);
     closeLogin.addEventListener('click', hideLoginModal);
     cancelLogin.addEventListener('click', hideLoginModal);
-    loginForm.addEventListener('submit', handleLogin); // Attach to form submit
+    loginForm.addEventListener('submit', handleLogin);
     
     // Disable copy/paste
     document.addEventListener('copy', preventCopyPaste);
     document.addEventListener('paste', preventCopyPaste);
     document.addEventListener('cut', preventCopyPaste);
-
+    
     // Initialize
     initFirebase();
 
@@ -858,6 +1076,9 @@
         });
         products = newProducts;
         
+        // Update category counts
+        updateCategoryCounts();
+        
         // Show sample products on first load
         if (products.length === 0) {
           loadSampleProducts();
@@ -867,15 +1088,27 @@
         showToast('Failed to load products. Check your connection.', 'error');
       });
     }
+    
+    function updateCategoryCounts() {
+      const foodProducts = products.filter(p => p.category === 'food').length;
+      const cleaningProducts = products.filter(p => p.category === 'cleaning').length;
+      const hakakatProducts = products.filter(p => p.category === 'hakakat').length;
+      
+      foodCount.textContent = foodProducts;
+      cleaningCount.textContent = cleaningProducts;
+      hakakatCount.textContent = hakakatProducts;
+    }
 
     function loadSampleProducts() {
       // Add sample products if none exist
       const sampleProducts = [
-        { name: "Premium Coffee", price: 15.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ECoffee%3C/text%3E%3C/svg%3E", barcode: "123456789" },
-        { name: "Organic Honey", price: 25.490, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EHoney%3C/text%3E%3C/svg%3E", barcode: "234567890" },
-        { name: "Water Bottle", price: 8.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%2300d2ff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EBottle%3C/text%3E%3C/svg%3E", barcode: "345678901" },
-        { name: "قهوة تركية", price: 18.500, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻖﻫﻮﺓ%3C/text%3E%3C/svg%3E", barcode: "456789012" },
-        { name: "عسل طبيعي", price: 32.750, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻊﺳﻞ%3C/text%3E%3C/svg%3E", barcode: "567890123" }
+        { name: "Premium Coffee", price: 15.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ECoffee%3C/text%3E%3C/svg%3E", barcode: "123456789", category: "food" },
+        { name: "Organic Honey", price: 25.490, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EHoney%3C/text%3E%3C/svg%3E", barcode: "234567890", category: "food" },
+        { name: "Water Bottle", price: 8.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%2300d2ff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3EBottle%3C/text%3E%3C/svg%3E", barcode: "345678901", category: "cleaning" },
+        { name: "قهوة تركية", price: 18.500, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%236a1e9e' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻖﻫﻮﺓ%3C/text%3E%3C/svg%3E", barcode: "456789012", category: "food" },
+        { name: "عسل طبيعي", price: 32.750, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23a45cff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3Eﻊﺳﻞ%3C/text%3E%3C/svg%3E", barcode: "567890123", category: "food" },
+        { name: "Dish Soap", price: 7.250, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%2300d2ff' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ESoap%3C/text%3E%3C/svg%3E", barcode: "678901234", category: "cleaning" },
+        { name: "Fresh Carrots", price: 3.990, image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23FF5722' width='200' height='200'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='30' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ECarrots%3C/text%3E%3C/svg%3E", barcode: "789012345", category: "hakakat" }
       ];
       
       sampleProducts.forEach(product => {
@@ -888,26 +1121,30 @@
     }
 
     function handleSearch(e) {
-      updateCharCounter();
-      const searchTerm = e.target.value.toLowerCase();
-      
-      if (searchTerm.length === 0) {
-        suggestionsContainer.style.display = 'none';
-        return;
-      }
-      
-      // Always use online products
-      const filteredProducts = products.filter(product => 
-        product.name.toLowerCase().startsWith(searchTerm) || 
-        (product.barcode && product.barcode.toLowerCase().startsWith(searchTerm))
-      );
+      // Debounce to reduce CPU usage
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        updateCharCounter();
+        const searchTerm = e.target.value.toLowerCase();
+        
+        if (searchTerm.length === 0) {
+          suggestionsContainer.style.display = 'none';
+          return;
+        }
+        
+        // Always use online products
+        const filteredProducts = products.filter(product => 
+          product.name.toLowerCase().startsWith(searchTerm) || 
+          (product.barcode && product.barcode.toLowerCase().startsWith(searchTerm))
+        );
 
-      if (filteredProducts.length > 0) {
-        renderSuggestions(filteredProducts);
-        suggestionsContainer.style.display = 'block';
-      } else {
-        suggestionsContainer.style.display = 'none';
-      }
+        if (filteredProducts.length > 0) {
+          renderSuggestions(filteredProducts);
+          suggestionsContainer.style.display = 'block';
+        } else {
+          suggestionsContainer.style.display = 'none';
+        }
+      }, 300);
     }
 
     function renderSuggestions(products) {
@@ -923,14 +1160,37 @@
             <div class="suggestion-price">${formatPrice(product.price)}</div>
           </div>
         `;
-        // Use touch events for mobile compatibility
+        
+        // Add touch events with scroll prevention
+        suggestionItem.addEventListener('touchstart', handleTouchStart, { passive: true });
         suggestionItem.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          selectProduct(product);
+          if (!isScrolling) {
+            e.preventDefault();
+            selectProduct(product);
+          }
         });
-        suggestionItem.addEventListener('click', () => selectProduct(product));
+        
+        suggestionItem.addEventListener('click', () => {
+          if (!isScrolling) {
+            selectProduct(product);
+          }
+        });
+        
         suggestionsContainer.appendChild(suggestionItem);
       });
+      
+      // Add scroll event listener to detect scrolling
+      suggestionsContainer.addEventListener('scroll', () => {
+        isScrolling = true;
+        clearTimeout(scrollPosition);
+        scrollPosition = setTimeout(() => {
+          isScrolling = false;
+        }, 100);
+      });
+    }
+    
+    function handleTouchStart() {
+      isScrolling = false;
     }
 
     function selectProduct(product) {
@@ -940,45 +1200,91 @@
       hideCharCounter();
       
       // Replace the current displayed product with the new one
+      currentCategory = null;
       displayedProduct = product;
       renderProducts();
+    }
+    
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
+    }
+    
+    function closeSidebarHandler() {
+      sidebar.classList.remove('open');
+    }
+    
+    function showCategoryProducts(category) {
+      currentCategory = category;
+      displayedProduct = null;
+      renderProducts();
+    }
+    
+    function showAllCategories() {
+      currentCategory = null;
+      displayedProduct = null;
+      renderProducts();
+    }
+    
+    function setupCategoryEvents() {
+      const categoryItems = document.querySelectorAll('.category-item');
+      categoryItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const category = item.getAttribute('data-category');
+          showCategoryProducts(category);
+          sidebar.classList.remove('open');
+        });
+      });
     }
 
     function renderProducts() {
       productsContainer.innerHTML = '';
       
       if (displayedProduct) {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.setAttribute('data-id', displayedProduct.id);
-        productCard.innerHTML = `
-          <div class="product-header">
-            <div class="product-header-info">
-              <div class="product-title ${displayedProduct.name.match(/[\u0600-\u06FF]/) ? 'arabic-text' : ''}">${displayedProduct.name}</div>
-              <div class="product-price">${formatPrice(displayedProduct.price)}</div>
+        // Render single product
+        const productCard = createProductCard(displayedProduct);
+        productsContainer.appendChild(productCard);
+      } else if (currentCategory) {
+        // Render category products
+        const categoryProducts = products.filter(p => p.category === currentCategory);
+        
+        if (categoryProducts.length === 0) {
+          productsContainer.innerHTML = `
+            <div class="placeholder-card">
+              <div class="placeholder-content">
+                <div class="placeholder-icon">
+                  <i class="fas fa-folder-open"></i>
+                </div>
+                <h3>No products in this category</h3>
+                <p>Try another category or search for products</p>
+              </div>
             </div>
-            <div class="product-actions">
-              <button class="action-btn minimize-btn" data-id="${displayedProduct.id}">
-                <i class="fas fa-window-minimize"></i>
-              </button>
-              <button class="action-btn close-btn" data-id="${displayedProduct.id}">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-          </div>
-          ${displayedProduct.image ? `<img src="${displayedProduct.image}" class="product-image" alt="${displayedProduct.name}">` : ''}
-          <div class="product-content">
-            ${displayedProduct.barcode ? `<div class="product-barcode">${displayedProduct.barcode}</div>` : ''}
-          </div>
+          `;
+          return;
+        }
+        
+        // Add category header
+        const categoryHeader = document.createElement('div');
+        categoryHeader.className = 'category-header';
+        
+        let categoryTitle = '';
+        switch(currentCategory) {
+          case 'food': categoryTitle = 'مواد غذائية'; break;
+          case 'cleaning': categoryTitle = 'مواد تنظيف'; break;
+          case 'hakakat': categoryTitle = 'حكاكات'; break;
+        }
+        
+        categoryHeader.innerHTML = `
+          <h2 class="category-title">${categoryTitle}</h2>
+          <div class="total-products">Total: ${categoryProducts.length} products</div>
         `;
         
-        productsContainer.appendChild(productCard);
+        productsContainer.appendChild(categoryHeader);
         
-        // Add event listeners to buttons
-        document.querySelector('.minimize-btn').addEventListener('click', minimizeProduct);
-        document.querySelector('.minimize-btn').addEventListener('touchend', minimizeProduct);
-        document.querySelector('.close-btn').addEventListener('click', removeProduct);
-        document.querySelector('.close-btn').addEventListener('touchend', removeProduct);
+        // Render all products in category
+        categoryProducts.forEach(product => {
+          const productCard = createProductCard(product);
+          productsContainer.appendChild(productCard);
+        });
       } else {
         // Show placeholder
         productsContainer.innerHTML = `
@@ -993,6 +1299,44 @@
           </div>
         `;
       }
+    }
+    
+    function createProductCard(product) {
+      const productCard = document.createElement('div');
+      productCard.className = 'product-card';
+      productCard.setAttribute('data-id', product.id);
+      productCard.innerHTML = `
+        <div class="product-header">
+          <div class="product-header-info">
+            <div class="product-title ${product.name.match(/[\u0600-\u06FF]/) ? 'arabic-text' : ''}">${product.name}</div>
+            <div class="product-price">${formatPrice(product.price)}</div>
+          </div>
+          <div class="product-actions">
+            <button class="action-btn minimize-btn" data-id="${product.id}">
+              <i class="fas fa-window-minimize"></i>
+            </button>
+            <button class="action-btn close-btn" data-id="${product.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        ${product.image ? `<img src="${product.image}" class="product-image" alt="${product.name}">` : ''}
+        <div class="product-content">
+          ${product.barcode ? `<div class="product-barcode">${product.barcode}</div>` : ''}
+          ${product.category ? `<div class="product-category">Category: ${product.category}</div>` : ''}
+        </div>
+      `;
+      
+      // Add event listeners to buttons
+      const minimizeBtn = productCard.querySelector('.minimize-btn');
+      const closeBtn = productCard.querySelector('.close-btn');
+      
+      minimizeBtn.addEventListener('click', minimizeProduct);
+      minimizeBtn.addEventListener('touchend', minimizeProduct);
+      closeBtn.addEventListener('click', removeProduct);
+      closeBtn.addEventListener('touchend', removeProduct);
+      
+      return productCard;
     }
 
     function minimizeProduct(e) {
@@ -1012,7 +1356,9 @@
       if (productCard) {
         productCard.style.animation = 'cardDisappear 0.5s forwards';
         setTimeout(() => {
-          displayedProduct = null;
+          if (displayedProduct && displayedProduct.id === productId) {
+            displayedProduct = null;
+          }
           renderProducts();
         }, 500);
       }
@@ -1071,6 +1417,9 @@
         suggestionsContainer.style.display = 'none';
       }
     });
+    
+    // Setup category events
+    setupCategoryEvents();
     
     // Add custom animation for card disappear
     const style = document.createElement('style');
