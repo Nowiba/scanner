@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="NexusScan - Premium product scanner with offline capabilities">
   <title>NexusScan | Premium Product Scanner</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +35,10 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
 
     html, body {
@@ -52,6 +55,7 @@
       position: relative;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      touch-action: manipulation;
     }
 
     body::before {
@@ -212,10 +216,24 @@
       color: var(--on-surface);
       outline: none;
       height: 50px;
+      maxlength: 14;
     }
 
     #search::placeholder {
       color: rgba(224, 224, 255, 0.5);
+    }
+
+    .char-counter {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(138, 43, 226, 0.2);
+      color: var(--on-surface);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: none;
     }
 
     .suggestions {
@@ -570,6 +588,44 @@
       border-left: 5px solid var(--warning);
     }
 
+    .toast.confirm {
+      background: rgba(30, 30, 50, 0.9);
+      border-left: 5px solid var(--primary);
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .toast-message {
+      width: 100%;
+    }
+
+    .toast-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    .toast-btn {
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+
+    .toast-confirm {
+      background: var(--error);
+      color: white;
+    }
+
+    .toast-cancel {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--on-surface);
+    }
+
     /* Offline indicator */
     .offline-indicator {
       position: fixed;
@@ -680,6 +736,9 @@
         <button class="action-btn offline-btn" id="offline-btn" title="Download for offline use">
           <i class="fas fa-download"></i>
         </button>
+        <button class="action-btn" id="settings-btn" title="Settings">
+          <i class="fas fa-cog"></i>
+        </button>
         <button class="action-btn" id="admin-btn" title="Admin Login">
           <i class="fas fa-lock"></i>
         </button>
@@ -689,7 +748,8 @@
     <div class="search-container">
       <div class="search-box">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="search" placeholder="Search products by name or barcode..." dir="auto">
+        <input type="text" id="search" placeholder="Search products by name or barcode..." dir="auto" maxlength="14">
+        <div class="char-counter" id="char-counter">0/14</div>
       </div>
       <div class="suggestions" id="suggestions">
         <!-- Suggestions will be populated here -->
@@ -767,10 +827,12 @@
 
     // DOM elements
     const searchInput = document.getElementById('search');
+    const charCounter = document.getElementById('char-counter');
     const suggestionsContainer = document.getElementById('suggestions');
     const productsContainer = document.getElementById('products-container');
     const adminBtn = document.getElementById('admin-btn');
     const offlineBtn = document.getElementById('offline-btn');
+    const settingsBtn = document.getElementById('settings-btn');
     const loginModal = document.getElementById('login-modal');
     const closeLogin = document.getElementById('close-login');
     const cancelLogin = document.getElementById('cancel-login');
@@ -789,20 +851,53 @@
 
     // Event listeners
     searchInput.addEventListener('input', handleSearch);
+    searchInput.addEventListener('keydown', handleKeyDown);
+    searchInput.addEventListener('focus', showCharCounter);
+    searchInput.addEventListener('blur', hideCharCounter);
     adminBtn.addEventListener('click', showLoginModal);
     offlineBtn.addEventListener('click', toggleOfflineMode);
+    settingsBtn.addEventListener('click', showSettingsConfirmation);
     closeLogin.addEventListener('click', hideLoginModal);
     cancelLogin.addEventListener('click', hideLoginModal);
     confirmLogin.addEventListener('click', handleLogin);
+    
+    // Disable copy/paste
+    document.addEventListener('copy', preventCopyPaste);
+    document.addEventListener('paste', preventCopyPaste);
+    document.addEventListener('cut', preventCopyPaste);
 
     // Initialize
     initFirebase();
     checkOnlineStatus();
     window.addEventListener('online', checkOnlineStatus);
     window.addEventListener('offline', checkOnlineStatus);
-    registerServiceWorker();
 
     // Functions
+    function preventCopyPaste(e) {
+      e.preventDefault();
+      showToast('Copy/paste is disabled in this app', 'warning');
+    }
+    
+    function showCharCounter() {
+      charCounter.style.display = 'block';
+      updateCharCounter();
+    }
+    
+    function hideCharCounter() {
+      charCounter.style.display = 'none';
+    }
+    
+    function updateCharCounter() {
+      const length = searchInput.value.length;
+      charCounter.textContent = `${length}/14`;
+    }
+    
+    function handleKeyDown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+    }
+
     function initFirebase() {
       // Set up database listener
       productRef = database.ref('products');
@@ -815,14 +910,6 @@
           });
         });
         products = newProducts;
-        
-        // Store products in localStorage for offline use
-        localStorage.setItem('nexusScanProducts', JSON.stringify(products));
-        
-        // If we're in offline mode, update the offlineProducts
-        if (isOfflineMode) {
-          offlineProducts = [...products];
-        }
         
         // Show sample products on first load
         if (products.length === 0) {
@@ -851,6 +938,7 @@
     }
 
     function handleSearch(e) {
+      updateCharCounter();
       const searchTerm = e.target.value.toLowerCase();
       
       if (searchTerm.length === 0) {
@@ -897,6 +985,7 @@
       // Close suggestions
       suggestionsContainer.style.display = 'none';
       searchInput.value = '';
+      hideCharCounter();
       
       // Replace the current displayed product with the new one
       displayedProduct = product;
@@ -982,17 +1071,46 @@
         isOfflineMode = false;
         showToast('Online mode activated', 'success');
       } else {
-        // Enable offline mode
-        const storedProducts = localStorage.getItem('nexusScanProducts');
-        if (storedProducts) {
-          offlineProducts = JSON.parse(storedProducts);
+        // Enable offline mode - download data only when button is clicked
+        if (products.length > 0) {
+          localStorage.setItem('nexusScanProducts', JSON.stringify(products));
+          offlineProducts = [...products];
           offlineBtn.classList.add('active');
           isOfflineMode = true;
-          showToast('Offline mode activated', 'success');
+          showToast('Offline mode activated - data downloaded', 'success');
         } else {
-          showToast('No offline data available', 'error');
+          showToast('No data available to download', 'error');
         }
       }
+    }
+
+    function showSettingsConfirmation() {
+      toast.innerHTML = `
+        <div class="toast-message">
+          <i class="fas fa-exclamation-circle"></i> Are you sure you want to delete all offline data?
+        </div>
+        <div class="toast-actions">
+          <button class="toast-btn toast-cancel" id="toast-cancel">Cancel</button>
+          <button class="toast-btn toast-confirm" id="toast-confirm">Delete</button>
+        </div>
+      `;
+      toast.className = 'toast confirm show';
+      
+      document.getElementById('toast-confirm').addEventListener('click', deleteAllData);
+      document.getElementById('toast-cancel').addEventListener('click', () => {
+        toast.classList.remove('show');
+      });
+    }
+
+    function deleteAllData() {
+      localStorage.removeItem('nexusScanProducts');
+      offlineProducts = [];
+      isOfflineMode = false;
+      offlineBtn.classList.remove('active');
+      displayedProduct = null;
+      renderProducts();
+      toast.classList.remove('show');
+      showToast('All offline data has been deleted', 'success');
     }
 
     function checkOnlineStatus() {
@@ -1007,18 +1125,6 @@
           isOfflineMode = true;
           offlineBtn.classList.add('active');
         }
-      }
-    }
-
-    function registerServiceWorker() {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-          .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
       }
     }
 
@@ -1120,28 +1226,15 @@
     `;
     document.head.appendChild(style);
     
-    // Load products from localStorage on initial load
+    // Load products from localStorage on initial load if offline mode is active
     window.addEventListener('DOMContentLoaded', () => {
       const storedProducts = localStorage.getItem('nexusScanProducts');
       if (storedProducts) {
-        products = JSON.parse(storedProducts);
+        offlineProducts = JSON.parse(storedProducts);
+        isOfflineMode = true;
+        offlineBtn.classList.add('active');
       }
     });
-  </script>
-  
-  <!-- Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js')
-          .then(function(registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(function(err) {
-            console.log('ServiceWorker registration failed: ', err);
-          });
-      });
-    }
   </script>
 </body>
 </html>
